@@ -6,7 +6,7 @@ import { SubmitHandler, useForm } from 'react-hook-form';
 import { register } from '@/app/(public)/auth/login/actions/auth';
 import Button from '@/components/ui/button';
 import InputWithLabel from '@/components/ui/input';
-import { toastError } from '@/lib/ui/toast';
+import { notifyError } from '@/lib/ui/notifications';
 import { registerSchema, RegisterValues } from '@/lib/validators/auth';
 
 export default function RegisterForm() {
@@ -25,7 +25,7 @@ export default function RegisterForm() {
 
     const result = await register(formData);
     if (result?.error) {
-      toastError(result.error);
+      notifyError(result.error);
     }
   };
 

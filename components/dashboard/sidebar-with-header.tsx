@@ -14,31 +14,110 @@ import {
   ChevronDownIcon,
   MagnifyingGlassIcon,
 } from '@heroicons/react/20/solid';
-import { Bars3Icon, HomeIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import {
+  Bars3Icon,
+  Cog6ToothIcon,
+  HomeIcon,
+  XMarkIcon,
+} from '@heroicons/react/24/outline';
+import { UserCircleIcon } from '@heroicons/react/24/solid';
+import { useQuery } from '@tanstack/react-query';
+import Link from 'next/link';
 import React from 'react';
 
+import { logout } from '@/app/(public)/auth/login/actions/auth';
 import { APP_ROUTES } from '@/constants/app-routes';
+import { getBrowserClient } from '@/lib/supabase/client-singleton';
+import { fetchProfileWithClient } from '@/lib/supabase/profile';
 import { cn } from '@/lib/utils';
 
 const navigation = [
   {
-    name: 'Dashboard',
-    href: APP_ROUTES.PRIVATE.DASHBOARD,
-    icon: HomeIcon,
-    current: true,
+    name: 'Dashboard', href: APP_ROUTES.PRIVATE.DASHBOARD, icon: HomeIcon, current: false, // should be set based on route
   },
+];
+const teams = [
+  { id: 1, name: 'Heroicons', href: '#', initial: 'H', current: false },
+  { id: 2, name: 'Tailwind Labs', href: '#', initial: 'T', current: false },
+  { id: 3, name: 'Workcation', href: '#', initial: 'W', current: false },
 ];
 const userNavigation = [
   { name: 'Your account', href: APP_ROUTES.PRIVATE.ACCOUNT },
-  { name: 'Sign out', href: '#' },
+  { name: 'Sign out' },
 ];
 
 export default function SidebarWithHeader({
   children,
-}: Readonly<{
+  user,
+}: {
   children: React.ReactNode;
-}>) {
+  user: { id: string; email?: string } | null;
+}) {
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
+  const userId = user?.id;
+
+  // singleton supabase client
+  const supabaseClient = React.useMemo(() => {
+    try {
+      return getBrowserClient();
+    } catch {
+      return null;
+    }
+  }, []);
+
+  // fetch profile (react-query)
+  const { data: profile } = useQuery({
+    queryKey: ['profile', userId],
+    queryFn: async () => {
+      if (!userId || !supabaseClient) return null;
+      return fetchProfileWithClient(supabaseClient, userId);
+    },
+    enabled: !!userId,
+  });
+
+  // Profile avatar URL resolved for browser (handles storage paths, full URLs, blob previews, etc.)
+  const [profileAvatarUrl, setProfileAvatarUrl] = React.useState<string | null>(
+    null,
+  );
+
+  React.useEffect(() => {
+    let mounted = true;
+
+    async function resolveAvatar() {
+      if (!profile?.avatar_url) {
+        if (mounted) setProfileAvatarUrl(null);
+        return;
+      }
+
+      const avatarPath = profile.avatar_url;
+
+      // Already a full URL (https, http, blob)
+      if (/^(https?:\/\/|blob:)/i.test(avatarPath)) {
+        if (mounted) setProfileAvatarUrl(avatarPath);
+        return;
+      }
+
+      if (!supabaseClient) {
+        if (mounted) setProfileAvatarUrl(null);
+        return;
+      }
+
+      try {
+        const { data } = supabaseClient.storage
+          .from('avatars')
+          .getPublicUrl(avatarPath);
+        if (mounted) setProfileAvatarUrl(data.publicUrl);
+      } catch {
+        if (mounted) setProfileAvatarUrl(null);
+      }
+    }
+
+    resolveAvatar();
+
+    return () => {
+      mounted = false;
+    };
+  }, [profile?.avatar_url, supabaseClient]);
 
   return (
     <React.Fragment>
@@ -94,7 +173,7 @@ export default function SidebarWithHeader({
                       <ul role="list" className="-mx-2 space-y-1">
                         {navigation.map((item) => (
                           <li key={item.name}>
-                            <a
+                            <Link
                               href={item.href}
                               className={cn(
                                 item.current
@@ -113,13 +192,45 @@ export default function SidebarWithHeader({
                                 )}
                               />
                               {item.name}
-                            </a>
+                            </Link>
                           </li>
                         ))}
                       </ul>
                     </li>
-                    {/* <li className="mt-auto">
-                      <a
+                    <li>
+                      <div className="text-xs/6 font-semibold text-gray-400">
+                        Your teams
+                      </div>
+                      <ul role="list" className="-mx-2 mt-2 space-y-1">
+                        {teams.map((team) => (
+                          <li key={team.name}>
+                            <Link
+                              href={team.href}
+                              className={cn(
+                                team.current
+                                  ? 'bg-gray-50 text-indigo-600 dark:bg-white/5 dark:text-white'
+                                  : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white',
+                                'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold',
+                              )}
+                            >
+                              <span
+                                className={cn(
+                                  team.current
+                                    ? 'border-indigo-600 text-indigo-600 dark:border-white/20 dark:text-white'
+                                    : 'border-gray-200 text-gray-400 group-hover:border-indigo-600 group-hover:text-indigo-600 dark:border-white/10 dark:group-hover:border-white/20 dark:group-hover:text-white',
+                                  'flex size-6 shrink-0 items-center justify-center rounded-lg border bg-white text-[0.625rem] font-medium dark:bg-white/5',
+                                )}
+                              >
+                                {team.initial}
+                              </span>
+                              <span className="truncate">{team.name}</span>
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </li>
+                    <li className="mt-auto">
+                      <Link
                         href="#"
                         className="group -mx-2 flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-50 hover:text-indigo-600 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-white"
                       >
@@ -128,8 +239,8 @@ export default function SidebarWithHeader({
                           className="size-6 shrink-0 text-gray-400 group-hover:text-indigo-600 dark:group-hover:text-white"
                         />
                         Settings
-                      </a>
-                    </li> */}
+                      </Link>
+                    </li>
                   </ul>
                 </nav>
               </div>
@@ -159,7 +270,7 @@ export default function SidebarWithHeader({
                   <ul role="list" className="-mx-2 space-y-1">
                     {navigation.map((item) => (
                       <li key={item.name}>
-                        <a
+                        <Link
                           href={item.href}
                           className={cn(
                             item.current
@@ -178,13 +289,45 @@ export default function SidebarWithHeader({
                             )}
                           />
                           {item.name}
-                        </a>
+                        </Link>
                       </li>
                     ))}
                   </ul>
                 </li>
-                {/* <li className="mt-auto">
-                  <a
+                <li>
+                  <div className="text-xs/6 font-semibold text-gray-400">
+                    Your teams
+                  </div>
+                  <ul role="list" className="-mx-2 mt-2 space-y-1">
+                    {teams.map((team) => (
+                      <li key={team.name}>
+                        <Link
+                          href={team.href}
+                          className={cn(
+                            team.current
+                              ? 'bg-gray-50 text-indigo-600 dark:bg-white/5 dark:text-white'
+                              : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white',
+                            'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold',
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              team.current
+                                ? 'border-indigo-600 text-indigo-600 dark:border-white/20 dark:text-white'
+                                : 'border-gray-200 text-gray-400 group-hover:border-indigo-600 group-hover:text-indigo-600 dark:border-white/10 dark:group-hover:border-white/20 dark:group-hover:text-white',
+                              'flex size-6 shrink-0 items-center justify-center rounded-lg border bg-white text-[0.625rem] font-medium dark:bg-white/5',
+                            )}
+                          >
+                            {team.initial}
+                          </span>
+                          <span className="truncate">{team.name}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </li>
+                <li className="mt-auto">
+                  <Link
                     href="#"
                     className="group -mx-2 flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-50 hover:text-indigo-600 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-white"
                   >
@@ -193,8 +336,8 @@ export default function SidebarWithHeader({
                       className="size-6 shrink-0 text-gray-400 group-hover:text-indigo-600 dark:group-hover:text-white"
                     />
                     Settings
-                  </a>
-                </li> */}
+                  </Link>
+                </li>
               </ul>
             </nav>
           </div>
@@ -250,17 +393,24 @@ export default function SidebarWithHeader({
                   <MenuButton className="relative flex items-center">
                     <span className="absolute -inset-1.5" />
                     <span className="sr-only">Open user menu</span>
-                    <img
-                      alt=""
-                      src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-                      className="size-8 rounded-full bg-gray-50 outline -outline-offset-1 outline-black/5 dark:bg-gray-800 dark:outline-white/10"
-                    />
+                    {profileAvatarUrl ? (
+                      <img
+                        src={profileAvatarUrl}
+                        alt="Avatar"
+                        className="size-8 rounded-full bg-gray-50 outline -outline-offset-1 outline-black/5 dark:bg-gray-800 dark:outline-white/10"
+                      />
+                    ) : (
+                      <UserCircleIcon
+                        aria-hidden="true"
+                        className="size-8 text-gray-300 dark:text-gray-500"
+                      />
+                    )}
                     <span className="hidden lg:flex lg:items-center">
                       <span
                         aria-hidden="true"
                         className="ml-4 text-sm/6 font-semibold text-gray-900 dark:text-white"
                       >
-                        Tom Cook
+                        {profile?.full_name || user?.email || 'User'}
                       </span>
                       <ChevronDownIcon
                         aria-hidden="true"
@@ -274,12 +424,23 @@ export default function SidebarWithHeader({
                   >
                     {userNavigation.map((item) => (
                       <MenuItem key={item.name}>
-                        <a
-                          href={item.href}
-                          className="block px-3 py-1 text-sm/6 text-gray-900 data-focus:bg-gray-50 data-focus:outline-hidden dark:text-white dark:data-focus:bg-white/5"
-                        >
-                          {item.name}
-                        </a>
+                        {item.href ? (
+                          <Link
+                            href={item.href}
+                            className="block px-3 py-1 text-sm/6 text-gray-900 data-focus:bg-gray-50 data-focus:outline-hidden dark:text-white dark:data-focus:bg-white/5"
+                          >
+                            {item.name}
+                          </Link>
+                        ) : (
+                          <form action={logout}>
+                            <button
+                              type="submit"
+                              className="block w-full px-3 py-1 text-left text-sm/6 text-gray-900 data-focus:bg-gray-50 dark:text-white dark:data-focus:bg-white/5"
+                            >
+                              Sign out
+                            </button>
+                          </form>
+                        )}
                       </MenuItem>
                     ))}
                   </MenuItems>

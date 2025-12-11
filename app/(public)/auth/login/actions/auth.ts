@@ -22,7 +22,7 @@ export async function login(formData: FormData) {
   }
 
   revalidatePath('/', 'layout');
-  redirect('/account');
+  redirect('/dashboard');
 }
 
 export async function register(formData: FormData) {
@@ -42,5 +42,20 @@ export async function register(formData: FormData) {
   }
 
   revalidatePath('/', 'layout');
-  redirect('/account');
+  redirect('/dashboard');
+}
+
+export async function logout() {
+  const supabase = await createClient();
+
+  // check if a user's logged in
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user) {
+    await supabase.auth.signOut();
+  }
+
+  redirect('/auth/login');
 }

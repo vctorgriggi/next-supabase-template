@@ -6,7 +6,7 @@ import { SubmitHandler, useForm } from 'react-hook-form';
 import { login } from '@/app/(public)/auth/login/actions/auth';
 import Button from '@/components/ui/button';
 import InputWithLabel from '@/components/ui/input';
-import { toastError } from '@/lib/ui/toast';
+import { notifyError } from '@/lib/ui/notifications';
 import { loginSchema, LoginValues } from '@/lib/validators/auth';
 
 export default function LoginForm() {
@@ -25,7 +25,7 @@ export default function LoginForm() {
 
     const result = await login(formData);
     if (result?.error) {
-      toastError(result.error);
+      notifyError(result.error);
     }
   };
 

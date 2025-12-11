@@ -2,19 +2,40 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { User } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { useQueryClient } from '@tanstack/react-query';
 import React from 'react';
 import { useForm } from 'react-hook-form';
 
 import Button from '@/components/ui/button';
 import InputWithLabel from '@/components/ui/input';
-import { createClient } from '@/lib/supabase/client';
-import { toastError, toastSuccess } from '@/lib/ui/toast';
+import { getBrowserClient } from '@/lib/supabase/client-singleton';
+import { fetchProfileWithClient } from '@/lib/supabase/profile';
+import { notifyError, notifySuccess } from '@/lib/ui/notifications';
 import { accountSchema, AccountValues } from '@/lib/validators/account';
 
 import Avatar from './avatar';
 
-export default function AccountForm({ user }: { user: User | null }) {
-  const supabase = createClient();
+export default function AccountForm({
+  user,
+  initialProfile = null,
+}: {
+  user: User | null;
+  initialProfile?: AccountValues | null;
+}) {
+  const queryClient = useQueryClient();
+
+  const [supabaseClient, setSupabaseClient] =
+    React.useState<SupabaseClient | null>(null);
+  React.useEffect(() => {
+    try {
+      const client = getBrowserClient();
+      setSupabaseClient(client);
+    } catch {
+      setSupabaseClient(null);
+    }
+  }, []);
+
   const [loading, setLoading] = React.useState(false);
   const [initialLoaded, setInitialLoaded] = React.useState(false);
   const initialValuesRef = React.useRef<AccountValues | null>(null);
@@ -22,6 +43,7 @@ export default function AccountForm({ user }: { user: User | null }) {
   const {
     register,
     watch,
+    getValues,
     handleSubmit,
     formState: { errors },
     reset,
@@ -37,51 +59,79 @@ export default function AccountForm({ user }: { user: User | null }) {
 
   const avatarUrl = watch('avatar_url');
 
-  const loadProfile = React.useCallback(async () => {
-    if (!user) return;
-
-    try {
-      setLoading(true);
-
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('full_name, username, website, avatar_url')
-        .eq('id', user?.id)
-        .single();
-
-      if (error) throw error;
-
-      const loadedValues: AccountValues = {
-        full_name: data.full_name ?? '',
-        username: data.username ?? '',
-        website: data.website ?? undefined,
-        avatar_url: data.avatar_url ?? null,
-      };
-
-      initialValuesRef.current = loadedValues;
-
-      reset(loadedValues);
-    } catch (error) {
-      toastError((error as Error)?.message || 'Oops! Something went wrong.');
-    } finally {
-      setLoading(false);
-      setInitialLoaded(true);
-    }
-  }, [reset, supabase, user]);
-
   React.useEffect(() => {
-    if (user) loadProfile();
-  }, [user, loadProfile]);
+    let mounted = true;
+    async function init() {
+      if (!user) {
+        setInitialLoaded(true);
+        return;
+      }
+
+      // se ainda não temos client do browser, esperamos
+      if (!supabaseClient) {
+        // apenas não faz a fetch agora; o efeito vai re-executar quando supabaseClient mudar
+        return;
+      }
+
+      // if server provided it, use it
+      if (initialProfile) {
+        const loadedValues: AccountValues = {
+          full_name: initialProfile.full_name ?? '',
+          username: initialProfile.username ?? '',
+          website: initialProfile.website ?? undefined,
+          avatar_url: initialProfile.avatar_url ?? null,
+        };
+        initialValuesRef.current = loadedValues;
+        reset(loadedValues);
+        setInitialLoaded(true);
+        return;
+      }
+
+      // fallback: client fetch (only if no initialProfile)
+      try {
+        setLoading(true);
+        const profile = await fetchProfileWithClient(supabaseClient, user.id);
+        if (!mounted) return;
+
+        const loadedValues: AccountValues = {
+          full_name: profile?.full_name ?? '',
+          username: profile?.username ?? '',
+          website: profile?.website ?? undefined,
+          avatar_url: profile?.avatar_url ?? null,
+        };
+        initialValuesRef.current = loadedValues;
+        reset(loadedValues);
+      } catch (err) {
+        notifyError((err as Error)?.message ?? 'Oops! Something went wrong.');
+      } finally {
+        if (mounted) {
+          setLoading(false);
+          setInitialLoaded(true);
+        }
+      }
+    }
+    init();
+    return () => {
+      mounted = false;
+    };
+    // re-executa quando supabaseClient estiver pronto
+  }, [initialProfile, reset, supabaseClient, user]);
 
   async function handleAvatarUpload(filePath: string | null) {
     if (!user) return;
+    if (!supabaseClient) {
+      notifyError(
+        'Client não inicializado ainda. Tente novamente em alguns instantes.',
+      );
+      return;
+    }
 
-    const current = watch();
+    const current = getValues();
 
     try {
       setLoading(true);
 
-      const { error } = await supabase.from('profiles').upsert({
+      const { error } = await supabaseClient.from('profiles').upsert({
         id: user.id,
         avatar_url: filePath,
         updated_at: new Date().toISOString(),
@@ -89,45 +139,53 @@ export default function AccountForm({ user }: { user: User | null }) {
 
       if (error) throw error;
 
-      reset({
+      const newValues = {
         ...current,
         avatar_url: filePath,
-      } satisfies AccountValues);
+      } satisfies AccountValues;
+
+      // update form and initial values so "Cancel" restores the new avatar
+      reset(newValues);
+      initialValuesRef.current = newValues;
+
+      // simple invalidation as you requested
+      if (user?.id) {
+        queryClient.invalidateQueries({ queryKey: ['profile', user.id] });
+      }
 
       if (filePath === null) {
-        toastSuccess('Your profile picture was removed.');
+        notifySuccess('Your profile picture was removed.');
       } else {
-        toastSuccess('Your profile picture was updated.');
+        notifySuccess('Your profile picture was updated.');
       }
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));
 
+      // restore form to previous values
       reset({
         ...current,
         avatar_url: current.avatar_url,
       } satisfies AccountValues);
 
-      toastError(error.message);
+      notifyError(error.message);
     } finally {
       setLoading(false);
     }
   }
 
-  function handleCancel() {
-    if (initialValuesRef.current) {
-      reset(initialValuesRef.current);
-    } else {
-      reset(); // reset to default values
-    }
-  }
-
   async function onSubmit(values: AccountValues) {
     if (!user) return;
+    if (!supabaseClient) {
+      notifyError(
+        'Client não inicializado ainda. Tente novamente em alguns instantes.',
+      );
+      return;
+    }
 
     try {
       setLoading(true);
 
-      const { error } = await supabase.from('profiles').upsert({
+      const { error } = await supabaseClient.from('profiles').upsert({
         id: user?.id as string,
         full_name: values.full_name,
         username: values.username,
@@ -138,13 +196,32 @@ export default function AccountForm({ user }: { user: User | null }) {
 
       if (error) throw error;
 
-      reset({ ...values, username: values.username });
+      const newValues = {
+        ...values,
+        username: values.username,
+      } satisfies AccountValues;
 
-      toastSuccess('Profile updated successfully');
+      reset(newValues);
+      initialValuesRef.current = newValues;
+
+      // simple invalidation as requested
+      if (user?.id) {
+        queryClient.invalidateQueries({ queryKey: ['profile', user.id] });
+      }
+
+      notifySuccess('Profile updated successfully');
     } catch (error) {
-      toastError((error as Error)?.message || 'Oops! Something went wrong.');
+      notifyError((error as Error)?.message || 'Oops! Something went wrong.');
     } finally {
       setLoading(false);
+    }
+  }
+
+  function handleCancel() {
+    if (initialValuesRef.current) {
+      reset(initialValuesRef.current);
+    } else {
+      reset(); // reset to default values
     }
   }
 
@@ -200,7 +277,7 @@ export default function AccountForm({ user }: { user: User | null }) {
                 size={48}
                 compress
                 onUpload={handleAvatarUpload}
-                onError={(err) => toastError(err.message)}
+                onError={(err) => notifyError(err.message)}
               />
             </div>
           </div>
@@ -242,14 +319,14 @@ export default function AccountForm({ user }: { user: User | null }) {
       </div>
 
       <div className="mt-6 flex items-center justify-end gap-x-6">
-        <Button
+        <button
           type="button"
-          variant="text"
+          className="text-sm/6 font-semibold text-gray-900 dark:text-white"
           onClick={handleCancel}
           disabled={loading}
         >
           Cancel
-        </Button>
+        </button>
         <Button
           type="submit"
           variant="primary"

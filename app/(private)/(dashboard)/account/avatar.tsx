@@ -1,11 +1,12 @@
 'use client';
 
 import { UserCircleIcon } from '@heroicons/react/24/solid';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import React from 'react';
 
 import Button from '@/components/ui/button';
 import { compressImage } from '@/lib/images/compress';
-import { createClient } from '@/lib/supabase/client';
+import { getBrowserClient } from '@/lib/supabase/client-singleton';
 
 type AvatarProps = {
   uid: string | null;
@@ -24,31 +25,109 @@ export default function Avatar({
   onError,
   compress = false,
 }: AvatarProps) {
-  const supabase = createClient();
+  const [supabaseClient, setSupabaseClient] =
+    React.useState<SupabaseClient | null>(null);
+  React.useEffect(() => {
+    try {
+      const client = getBrowserClient();
+      setSupabaseClient(client);
+    } catch {
+      setSupabaseClient(null);
+    }
+  }, []);
+
   const [publicUrl, setPublicUrl] = React.useState<string | null>(null);
   const [uploading, setUploading] = React.useState(false);
+  const previewRef = React.useRef<string | null>(null);
 
+  // load public url for existing path; wait supabaseClient if needed
   React.useEffect(() => {
-    if (!url) return setPublicUrl(null);
+    let mounted = true;
 
-    const { data } = supabase.storage.from('avatars').getPublicUrl(url);
-    setPublicUrl(data.publicUrl);
-  }, [url, supabase]);
+    async function resolve() {
+      if (!url) {
+        if (mounted) setPublicUrl(null);
+        return;
+      }
+
+      // if already a full URL (http/https/blob), use it directly
+      if (/^(https?:\/\/|blob:)/i.test(url)) {
+        if (mounted) setPublicUrl(url);
+        return;
+      }
+
+      if (!supabaseClient) {
+        if (mounted) setPublicUrl(null);
+        return;
+      }
+
+      try {
+        const { data } = supabaseClient.storage
+          .from('avatars')
+          .getPublicUrl(url);
+        if (mounted) {
+          if (previewRef.current) {
+            try {
+              URL.revokeObjectURL(previewRef.current);
+            } catch {
+              /* ignore */
+            }
+            previewRef.current = null;
+          }
+          setPublicUrl(data.publicUrl);
+        }
+      } catch {
+        if (mounted) setPublicUrl(null);
+      }
+    }
+
+    resolve();
+
+    return () => {
+      mounted = false;
+    };
+  }, [url, supabaseClient]);
+
+  // cleanup on unmount: revoke any blob preview still held
+  React.useEffect(() => {
+    return () => {
+      if (previewRef.current) {
+        try {
+          URL.revokeObjectURL(previewRef.current);
+        } catch {
+          /* ignore */
+        }
+        previewRef.current = null;
+      }
+    };
+  }, []);
 
   async function handleFile(file: File) {
     if (!uid) throw new Error('User ID is required');
-
     if (!file.type.startsWith('image/'))
       throw new Error('Only image files are allowed');
 
-    const MAX_BYTES = 10 * 1024 * 1024; // 10MB
+    if (!supabaseClient) throw new Error('Client não inicializado ainda');
+
+    const MAX_BYTES = 10 * 1024 * 1024;
     if (file.size > MAX_BYTES)
       throw new Error('File size exceeds the 10MB limit');
 
     const uploadFile = compress ? await compressImage(file) : file;
 
-    // preview
+    // Revoke previous blob preview if any
+    if (previewRef.current) {
+      try {
+        URL.revokeObjectURL(previewRef.current);
+      } catch {
+        /* ignore */
+      }
+      previewRef.current = null;
+    }
+
+    // Create new blob preview and show it
     const preview = URL.createObjectURL(uploadFile);
+    previewRef.current = preview;
     setPublicUrl(preview);
 
     const ext = (uploadFile.name.split('.').pop() || 'jpg').replace(
@@ -57,7 +136,7 @@ export default function Avatar({
     );
     const filePath = `${uid}/${crypto.randomUUID()}.${ext}`;
 
-    const { error: uploadError } = await supabase.storage
+    const { error: uploadError } = await supabaseClient.storage
       .from('avatars')
       .upload(filePath, uploadFile, {
         cacheControl: '3600',
@@ -65,25 +144,69 @@ export default function Avatar({
         contentType: uploadFile.type,
       });
 
-    if (uploadError) throw uploadError;
+    if (uploadError) {
+      // revoke the blob preview because upload failed and we won't keep it
+      if (previewRef.current) {
+        try {
+          URL.revokeObjectURL(previewRef.current);
+        } catch {
+          /* ignore */
+        }
+        previewRef.current = null;
+      }
+      // restore previous permanent publicUrl if exists (based on `url`)
+      if (url) {
+        try {
+          const { data } = supabaseClient.storage
+            .from('avatars')
+            .getPublicUrl(url);
+          setPublicUrl(data.publicUrl);
+        } catch {
+          setPublicUrl(null);
+        }
+      } else {
+        setPublicUrl(null);
+      }
 
-    // best-effort delete
+      throw uploadError;
+    }
+
+    // On success: switch preview to permanent public URL
+    const { data: publicData } = supabaseClient.storage
+      .from('avatars')
+      .getPublicUrl(filePath);
+    // revoke blob preview ref (we no longer need it)
+    if (previewRef.current) {
+      try {
+        URL.revokeObjectURL(previewRef.current);
+      } catch {
+        /* ignore */
+      }
+      previewRef.current = null;
+    }
+    setPublicUrl(publicData.publicUrl);
+
+    // best-effort delete previous avatar; log on failure but don't throw
     if (url) {
-      await supabase.storage
+      supabaseClient.storage
         .from('avatars')
         .remove([url])
-        .catch(() => {});
+        .catch((err: unknown) => {
+          console.warn('failed to remove old avatar:', err);
+        });
     }
 
     return filePath;
   }
 
   async function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setUploading(true);
     try {
-      setUploading(true);
-
       const file = e.target.files?.[0];
-      if (!file) return;
+      if (!file) {
+        setUploading(false);
+        return;
+      }
 
       const filePath = await handleFile(file);
       onUpload(filePath);
@@ -102,10 +225,17 @@ export default function Avatar({
       return;
     }
 
+    if (!supabaseClient) {
+      onError?.(new Error('Client não inicializado ainda'));
+      return;
+    }
+
     try {
       setUploading(true);
 
-      const { error } = await supabase.storage.from('avatars').remove([url]);
+      const { error } = await supabaseClient.storage
+        .from('avatars')
+        .remove([url]);
       if (error) throw error;
 
       onUpload(null);
@@ -117,7 +247,6 @@ export default function Avatar({
       setUploading(false);
     }
   }
-
   return (
     <div className="mt-2 flex items-center gap-x-3">
       <div style={{ width: size, height: size }}>
