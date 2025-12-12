@@ -3,8 +3,11 @@ import React from 'react';
 
 import LoginForm from '@/components/auth/login-form';
 import { APP_ROUTES } from '@/constants/app-routes';
+import { requireGuest } from '@/lib/supabase/auth';
 
-export default function Login() {
+export default async function Login() {
+  await requireGuest();
+
   return (
     <React.Fragment>
       <div className="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">

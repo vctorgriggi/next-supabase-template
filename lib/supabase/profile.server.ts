@@ -1,17 +1,17 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { QueryClient } from '@tanstack/react-query';
 
 import type { Result } from '@/lib/types/result';
 import { failure, success } from '@/lib/types/result';
 
+import { getServerClient } from './server';
 import type { Profile, ProfileUpdate } from './types';
 
-export async function fetchProfileWithClient(
-  supabase: SupabaseClient,
-  userId: string,
-): Promise<Result<Profile>> {
+export async function fetchProfile(userId: string): Promise<Result<Profile>> {
   if (!userId) {
     return failure('user ID is required');
   }
+
+  const supabase = await getServerClient();
 
   const { data, error } = await supabase
     .from('profiles')
@@ -36,14 +36,34 @@ export async function fetchProfileWithClient(
   });
 }
 
-export async function updateProfileWithClient(
-  supabase: SupabaseClient,
+export async function prefetchProfile(
+  queryClient: QueryClient,
+  userId: string,
+): Promise<void> {
+  try {
+    await queryClient.prefetchQuery({
+      queryKey: ['profile', userId],
+      queryFn: async () => {
+        const result = await fetchProfile(userId);
+        if (!result.success) throw new Error(result.error);
+        return result.data;
+      },
+      staleTime: 1000 * 60 * 5,
+    });
+  } catch (error) {
+    console.warn('failed to prefetch profile:', error);
+  }
+}
+
+export async function updateProfile(
   userId: string,
   updates: ProfileUpdate,
 ): Promise<Result<boolean>> {
   if (!userId) {
     return failure('user ID is required');
   }
+
+  const supabase = await getServerClient();
 
   const { error } = await supabase
     .from('profiles')

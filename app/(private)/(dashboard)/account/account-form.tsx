@@ -2,15 +2,14 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { User } from '@supabase/supabase-js';
-import type { SupabaseClient } from '@supabase/supabase-js';
-import { useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import React from 'react';
 import { useForm } from 'react-hook-form';
 
 import Button from '@/components/ui/button';
 import InputWithLabel from '@/components/ui/input';
-import { getBrowserClient } from '@/lib/supabase/client-singleton';
-import { fetchProfileWithClient } from '@/lib/supabase/profile';
+import { confirmAvatar } from '@/lib/actions/avatar';
+import { updateProfile } from '@/lib/actions/profile';
 import { notifyError, notifySuccess } from '@/lib/ui/notifications';
 import { accountSchema, AccountValues } from '@/lib/validators/account';
 
@@ -24,21 +23,38 @@ export default function AccountForm({
   initialProfile?: AccountValues | null;
 }) {
   const queryClient = useQueryClient();
-
-  const [supabaseClient, setSupabaseClient] =
-    React.useState<SupabaseClient | null>(null);
-  React.useEffect(() => {
-    try {
-      const client = getBrowserClient();
-      setSupabaseClient(client);
-    } catch {
-      setSupabaseClient(null);
-    }
-  }, []);
-
   const [loading, setLoading] = React.useState(false);
-  const [initialLoaded, setInitialLoaded] = React.useState(false);
-  const initialValuesRef = React.useRef<AccountValues | null>(null);
+
+  const confirmMutation = useMutation({
+    mutationFn: async (payload: {
+      filePath: string | null;
+      previousPath?: string | null;
+    }) => {
+      const result = await confirmAvatar(
+        payload.filePath,
+        payload.previousPath,
+      );
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+      return result.data;
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async (values: AccountValues) => {
+      const result = await updateProfile({
+        full_name: values.full_name,
+        username: values.username,
+        website: values.website,
+        avatar_url: values.avatar_url,
+      });
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+      return result.data;
+    },
+  });
 
   const {
     register,
@@ -49,124 +65,58 @@ export default function AccountForm({
     reset,
   } = useForm<AccountValues>({
     resolver: zodResolver(accountSchema),
-    defaultValues: {
+    defaultValues: initialProfile || {
       full_name: '',
       username: '',
-      website: '',
+      website: null,
       avatar_url: null,
     },
   });
 
   const avatarUrl = watch('avatar_url');
-
-  React.useEffect(() => {
-    let mounted = true;
-    async function init() {
-      if (!user) {
-        setInitialLoaded(true);
-        return;
-      }
-
-      // se ainda não temos client do browser, esperamos
-      if (!supabaseClient) {
-        // apenas não faz a fetch agora; o efeito vai re-executar quando supabaseClient mudar
-        return;
-      }
-
-      // if server provided it, use it
-      if (initialProfile) {
-        const loadedValues: AccountValues = {
-          full_name: initialProfile.full_name ?? '',
-          username: initialProfile.username ?? '',
-          website: initialProfile.website ?? undefined,
-          avatar_url: initialProfile.avatar_url ?? null,
-        };
-        initialValuesRef.current = loadedValues;
-        reset(loadedValues);
-        setInitialLoaded(true);
-        return;
-      }
-
-      // fallback: client fetch (only if no initialProfile)
-      try {
-        setLoading(true);
-        const profile = await fetchProfileWithClient(supabaseClient, user.id);
-        if (!mounted) return;
-
-        const loadedValues: AccountValues = {
-          full_name: profile?.full_name ?? '',
-          username: profile?.username ?? '',
-          website: profile?.website ?? undefined,
-          avatar_url: profile?.avatar_url ?? null,
-        };
-        initialValuesRef.current = loadedValues;
-        reset(loadedValues);
-      } catch (err) {
-        notifyError((err as Error)?.message ?? 'Oops! Something went wrong.');
-      } finally {
-        if (mounted) {
-          setLoading(false);
-          setInitialLoaded(true);
-        }
-      }
-    }
-    init();
-    return () => {
-      mounted = false;
-    };
-    // re-executa quando supabaseClient estiver pronto
-  }, [initialProfile, reset, supabaseClient, user]);
+  const initialValuesRef = React.useRef<AccountValues>(
+    initialProfile || {
+      full_name: '',
+      username: '',
+      website: null,
+      avatar_url: null,
+    },
+  );
 
   async function handleAvatarUpload(filePath: string | null) {
     if (!user) return;
-    if (!supabaseClient) {
-      notifyError(
-        'Client não inicializado ainda. Tente novamente em alguns instantes.',
-      );
-      return;
-    }
 
     const current = getValues();
+    const previousPath = initialValuesRef.current?.avatar_url ?? null;
 
     try {
       setLoading(true);
 
-      const { error } = await supabaseClient.from('profiles').upsert({
-        id: user.id,
-        avatar_url: filePath,
-        updated_at: new Date().toISOString(),
-      });
-
-      if (error) throw error;
+      await confirmMutation.mutateAsync({ filePath, previousPath });
 
       const newValues = {
         ...current,
         avatar_url: filePath,
       } satisfies AccountValues;
 
-      // update form and initial values so "Cancel" restores the new avatar
       reset(newValues);
       initialValuesRef.current = newValues;
 
-      // simple invalidation as you requested
       if (user?.id) {
         queryClient.invalidateQueries({ queryKey: ['profile', user.id] });
       }
 
-      if (filePath === null) {
-        notifySuccess('Your profile picture was removed.');
-      } else {
-        notifySuccess('Your profile picture was updated.');
-      }
+      notifySuccess(
+        filePath === null
+          ? 'Your profile picture was removed.'
+          : 'Your profile picture was updated.',
+      );
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));
-
-      // restore form to previous values
       reset({
         ...current,
         avatar_url: current.avatar_url,
       } satisfies AccountValues);
-
       notifyError(error.message);
     } finally {
       setLoading(false);
@@ -174,55 +124,38 @@ export default function AccountForm({
   }
 
   async function onSubmit(values: AccountValues) {
-    if (!user) return;
-    if (!supabaseClient) {
-      notifyError(
-        'Client não inicializado ainda. Tente novamente em alguns instantes.',
-      );
+    if (!user) {
+      notifyError('Not authenticated. Please log in.');
       return;
     }
 
     try {
       setLoading(true);
 
-      const { error } = await supabaseClient.from('profiles').upsert({
-        id: user?.id as string,
-        full_name: values.full_name,
-        username: values.username,
-        website: values.website || null,
-        avatar_url: values.avatar_url,
-        updated_at: new Date().toISOString(),
-      });
-
-      if (error) throw error;
-
-      const newValues = {
+      const updates = {
         ...values,
-        username: values.username,
-      } satisfies AccountValues;
+        website: values.website || null,
+      };
 
-      reset(newValues);
-      initialValuesRef.current = newValues;
+      await updateMutation.mutateAsync(updates);
 
-      // simple invalidation as requested
+      reset(values);
+      initialValuesRef.current = values;
+
       if (user?.id) {
         queryClient.invalidateQueries({ queryKey: ['profile', user.id] });
       }
 
       notifySuccess('Profile updated successfully');
     } catch (error) {
-      notifyError((error as Error)?.message || 'Oops! Something went wrong.');
+      notifyError((error as Error)?.message || 'Something went wrong.');
     } finally {
       setLoading(false);
     }
   }
 
   function handleCancel() {
-    if (initialValuesRef.current) {
-      reset(initialValuesRef.current);
-    } else {
-      reset(); // reset to default values
-    }
+    reset(initialValuesRef.current);
   }
 
   return (
@@ -283,7 +216,6 @@ export default function AccountForm({
           </div>
         </div>
 
-        {/* Personal Information section */}
         <div className="grid grid-cols-1 gap-x-8 gap-y-10 border-b border-gray-900/10 pb-12 md:grid-cols-3 dark:border-white/10">
           <div>
             <h2 className="text-base/7 font-semibold text-gray-900 dark:text-white">
@@ -327,11 +259,7 @@ export default function AccountForm({
         >
           Cancel
         </button>
-        <Button
-          type="submit"
-          variant="primary"
-          disabled={loading || !initialLoaded}
-        >
+        <Button type="submit" variant="primary" disabled={loading}>
           Save
         </Button>
       </div>

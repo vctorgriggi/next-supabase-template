@@ -3,8 +3,11 @@ import React from 'react';
 
 import RegisterForm from '@/components/auth/register-form';
 import { APP_ROUTES } from '@/constants/app-routes';
+import { requireGuest } from '@/lib/supabase/auth';
 
-export default function Register() {
+export default async function Register() {
+  await requireGuest();
+
   return (
     <React.Fragment>
       <div className="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">

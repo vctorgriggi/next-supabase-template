@@ -1,12 +1,9 @@
 import { dehydrate, QueryClient } from '@tanstack/react-query';
-import { redirect } from 'next/navigation';
 
 import SidebarWithHeader from '@/components/dashboard/sidebar-with-header';
 import QueryProvider from '@/components/providers/QueryProvider';
-import { APP_ROUTES } from '@/constants/app-routes';
-import { getCurrentUserServer } from '@/lib/supabase/auth';
-import { fetchProfileWithClient } from '@/lib/supabase/profile';
-import { createClient as CreateServerClient } from '@/lib/supabase/server';
+import { requireAuth } from '@/lib/supabase/auth';
+import { prefetchProfile } from '@/lib/supabase/profile.server';
 
 // export const metadata: Metadata = {
 //   title: 'Create Next App',
@@ -18,23 +15,11 @@ export default async function DashboardLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const user = await getCurrentUserServer();
-  if (!user) {
-    redirect(APP_ROUTES.AUTH.LOGIN);
-  }
+  const user = await requireAuth();
 
   const queryClient = new QueryClient();
 
-  const supabase = await CreateServerClient();
-
-  try {
-    await queryClient.prefetchQuery({
-      queryKey: ['profile', user.id],
-      queryFn: () => fetchProfileWithClient(supabase, user.id),
-    });
-  } catch (err) {
-    console.warn('prefetch profile failed:', err);
-  }
+  await prefetchProfile(queryClient, user.id);
 
   return (
     <QueryProvider dehydratedState={dehydrate(queryClient)}>

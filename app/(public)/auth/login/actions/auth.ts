@@ -1,61 +1,53 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
-import { createClient } from '@/lib/supabase/server';
+import { APP_ROUTES } from '@/constants/app-routes';
+import { signInWithPassword, signOut, signUp } from '@/lib/supabase/auth';
 
 export async function login(formData: FormData) {
-  const supabase = await createClient();
+  const email = formData.get('email');
+  const password = formData.get('password');
 
-  // type-casting here for convenience
-  // in practice, you should validate your inputs
-  const data = {
-    email: formData.get('email') as string,
-    password: formData.get('password') as string,
-  };
-
-  const { error } = await supabase.auth.signInWithPassword(data);
-
-  if (error) {
-    return { error: error.message };
+  if (!email || !password) {
+    return { error: 'email and password are required' };
   }
 
-  revalidatePath('/', 'layout');
-  redirect('/dashboard');
+  const result = await signInWithPassword(
+    email.toString(),
+    password.toString(),
+  );
+
+  if (!result.success) {
+    return { error: result.error };
+  }
+
+  redirect(APP_ROUTES.PRIVATE.DASHBOARD);
 }
 
 export async function register(formData: FormData) {
-  const supabase = await createClient();
+  const email = formData.get('email');
+  const password = formData.get('password');
 
-  // type-casting here for convenience
-  // in practice, you should validate your inputs
-  const data = {
-    email: formData.get('email') as string,
-    password: formData.get('password') as string,
-  };
-
-  const { error } = await supabase.auth.signUp(data);
-
-  if (error) {
-    return { error: error.message };
+  if (!email || !password) {
+    return { error: 'email and password are required' };
   }
 
-  revalidatePath('/', 'layout');
-  redirect('/dashboard');
+  const result = await signUp(email.toString(), password.toString());
+
+  if (!result.success) {
+    return { error: result.error };
+  }
+
+  redirect(APP_ROUTES.PRIVATE.DASHBOARD);
 }
 
 export async function logout() {
-  const supabase = await createClient();
+  const result = await signOut();
 
-  // check if a user's logged in
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (user) {
-    await supabase.auth.signOut();
+  if (!result.success) {
+    console.error('logout error:', result.error);
   }
 
-  redirect('/auth/login');
+  redirect(APP_ROUTES.AUTH.LOGIN);
 }

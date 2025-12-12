@@ -21,29 +21,31 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { UserCircleIcon } from '@heroicons/react/24/solid';
-import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import React from 'react';
 
 import { logout } from '@/app/(public)/auth/login/actions/auth';
 import { APP_ROUTES } from '@/constants/app-routes';
-import { getBrowserClient } from '@/lib/supabase/client-singleton';
-import { fetchProfileWithClient } from '@/lib/supabase/profile';
+import { useProfile } from '@/hooks/use-profile';
+import { useProfileAvatar } from '@/hooks/use-profile-avatar';
 import { cn } from '@/lib/utils';
 
 const navigation = [
   {
-    name: 'Dashboard', href: APP_ROUTES.PRIVATE.DASHBOARD, icon: HomeIcon, current: false, // should be set based on route
+    name: 'Dashboard',
+    href: APP_ROUTES.PRIVATE.DASHBOARD,
+    icon: HomeIcon,
   },
 ];
 const teams = [
-  { id: 1, name: 'Heroicons', href: '#', initial: 'H', current: false },
-  { id: 2, name: 'Tailwind Labs', href: '#', initial: 'T', current: false },
-  { id: 3, name: 'Workcation', href: '#', initial: 'W', current: false },
+  { id: 1, name: 'Heroicons', href: '#', initial: 'H' },
+  { id: 2, name: 'Tailwind Labs', href: '#', initial: 'T' },
+  { id: 3, name: 'Workcation', href: '#', initial: 'W' },
 ];
 const userNavigation = [
   { name: 'Your account', href: APP_ROUTES.PRIVATE.ACCOUNT },
-  { name: 'Sign out' },
+  { name: 'Sign out', action: 'signout' as const },
 ];
 
 export default function SidebarWithHeader({
@@ -54,74 +56,17 @@ export default function SidebarWithHeader({
   user: { id: string; email?: string } | null;
 }) {
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
-  const userId = user?.id;
+  const pathname = usePathname();
 
-  // singleton supabase client
-  const supabaseClient = React.useMemo(() => {
-    try {
-      return getBrowserClient();
-    } catch {
-      return null;
-    }
-  }, []);
+  const { profile, supabaseClient } = useProfile(user?.id);
+  const avatarState = useProfileAvatar(profile?.avatar_url, supabaseClient);
 
-  // fetch profile (react-query)
-  const { data: profile } = useQuery({
-    queryKey: ['profile', userId],
-    queryFn: async () => {
-      if (!userId || !supabaseClient) return null;
-      return fetchProfileWithClient(supabaseClient, userId);
-    },
-    enabled: !!userId,
-  });
-
-  // Profile avatar URL resolved for browser (handles storage paths, full URLs, blob previews, etc.)
-  const [profileAvatarUrl, setProfileAvatarUrl] = React.useState<string | null>(
-    null,
-  );
-
-  React.useEffect(() => {
-    let mounted = true;
-
-    async function resolveAvatar() {
-      if (!profile?.avatar_url) {
-        if (mounted) setProfileAvatarUrl(null);
-        return;
-      }
-
-      const avatarPath = profile.avatar_url;
-
-      // Already a full URL (https, http, blob)
-      if (/^(https?:\/\/|blob:)/i.test(avatarPath)) {
-        if (mounted) setProfileAvatarUrl(avatarPath);
-        return;
-      }
-
-      if (!supabaseClient) {
-        if (mounted) setProfileAvatarUrl(null);
-        return;
-      }
-
-      try {
-        const { data } = supabaseClient.storage
-          .from('avatars')
-          .getPublicUrl(avatarPath);
-        if (mounted) setProfileAvatarUrl(data.publicUrl);
-      } catch {
-        if (mounted) setProfileAvatarUrl(null);
-      }
-    }
-
-    resolveAvatar();
-
-    return () => {
-      mounted = false;
-    };
-  }, [profile?.avatar_url, supabaseClient]);
+  const displayName = profile?.full_name || user?.email || 'User';
 
   return (
     <React.Fragment>
       <div>
+        {/* mobile sidebar */}
         <Dialog
           open={sidebarOpen}
           onClose={setSidebarOpen}
@@ -153,7 +98,7 @@ export default function SidebarWithHeader({
                 </div>
               </TransitionChild>
 
-              {/* Sidebar component, swap this element with another sidebar if you like */}
+              {/* mobile Sidebar content */}
               <div className="relative flex grow flex-col gap-y-5 overflow-y-auto bg-white px-6 pb-4 dark:bg-gray-900 dark:ring dark:ring-white/10 dark:before:pointer-events-none dark:before:absolute dark:before:inset-0 dark:before:bg-black/10">
                 <div className="relative flex h-16 shrink-0 items-center">
                   <img
@@ -171,30 +116,33 @@ export default function SidebarWithHeader({
                   <ul role="list" className="flex flex-1 flex-col gap-y-7">
                     <li>
                       <ul role="list" className="-mx-2 space-y-1">
-                        {navigation.map((item) => (
-                          <li key={item.name}>
-                            <Link
-                              href={item.href}
-                              className={cn(
-                                item.current
-                                  ? 'bg-gray-50 text-indigo-600 dark:bg-white/5 dark:text-white'
-                                  : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white',
-                                'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold',
-                              )}
-                            >
-                              <item.icon
-                                aria-hidden="true"
+                        {navigation.map((item) => {
+                          const isCurrent = pathname === item.href;
+                          return (
+                            <li key={item.name}>
+                              <Link
+                                href={item.href}
                                 className={cn(
-                                  item.current
-                                    ? 'text-indigo-600 dark:text-white'
-                                    : 'text-gray-400 group-hover:text-indigo-600 dark:group-hover:text-white',
-                                  'size-6 shrink-0',
+                                  isCurrent
+                                    ? 'bg-gray-50 text-indigo-600 dark:bg-white/5 dark:text-white'
+                                    : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white',
+                                  'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold',
                                 )}
-                              />
-                              {item.name}
-                            </Link>
-                          </li>
-                        ))}
+                              >
+                                <item.icon
+                                  aria-hidden="true"
+                                  className={cn(
+                                    isCurrent
+                                      ? 'text-indigo-600 dark:text-white'
+                                      : 'text-gray-400 group-hover:text-indigo-600 dark:group-hover:text-white',
+                                    'size-6 shrink-0',
+                                  )}
+                                />
+                                {item.name}
+                              </Link>
+                            </li>
+                          );
+                        })}
                       </ul>
                     </li>
                     <li>
@@ -202,31 +150,34 @@ export default function SidebarWithHeader({
                         Your teams
                       </div>
                       <ul role="list" className="-mx-2 mt-2 space-y-1">
-                        {teams.map((team) => (
-                          <li key={team.name}>
-                            <Link
-                              href={team.href}
-                              className={cn(
-                                team.current
-                                  ? 'bg-gray-50 text-indigo-600 dark:bg-white/5 dark:text-white'
-                                  : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white',
-                                'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold',
-                              )}
-                            >
-                              <span
+                        {teams.map((team) => {
+                          const isCurrent = pathname === team.href;
+                          return (
+                            <li key={team.name}>
+                              <Link
+                                href={team.href}
                                 className={cn(
-                                  team.current
-                                    ? 'border-indigo-600 text-indigo-600 dark:border-white/20 dark:text-white'
-                                    : 'border-gray-200 text-gray-400 group-hover:border-indigo-600 group-hover:text-indigo-600 dark:border-white/10 dark:group-hover:border-white/20 dark:group-hover:text-white',
-                                  'flex size-6 shrink-0 items-center justify-center rounded-lg border bg-white text-[0.625rem] font-medium dark:bg-white/5',
+                                  isCurrent
+                                    ? 'bg-gray-50 text-indigo-600 dark:bg-white/5 dark:text-white'
+                                    : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white',
+                                  'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold',
                                 )}
                               >
-                                {team.initial}
-                              </span>
-                              <span className="truncate">{team.name}</span>
-                            </Link>
-                          </li>
-                        ))}
+                                <span
+                                  className={cn(
+                                    isCurrent
+                                      ? 'border-indigo-600 text-indigo-600 dark:border-white/20 dark:text-white'
+                                      : 'border-gray-200 text-gray-400 group-hover:border-indigo-600 group-hover:text-indigo-600 dark:border-white/10 dark:group-hover:border-white/20 dark:group-hover:text-white',
+                                    'flex size-6 shrink-0 items-center justify-center rounded-lg border bg-white text-[0.625rem] font-medium dark:bg-white/5',
+                                  )}
+                                >
+                                  {team.initial}
+                                </span>
+                                <span className="truncate">{team.name}</span>
+                              </Link>
+                            </li>
+                          );
+                        })}
                       </ul>
                     </li>
                     <li className="mt-auto">
@@ -248,9 +199,8 @@ export default function SidebarWithHeader({
           </div>
         </Dialog>
 
-        {/* Static sidebar for desktop */}
+        {/* desktop sidebar */}
         <div className="hidden bg-gray-900 lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
-          {/* Sidebar component, swap this element with another sidebar if you like */}
           <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white px-6 pb-4 dark:border-white/10 dark:bg-black/10">
             <div className="flex h-16 shrink-0 items-center">
               <img
@@ -268,30 +218,33 @@ export default function SidebarWithHeader({
               <ul role="list" className="flex flex-1 flex-col gap-y-7">
                 <li>
                   <ul role="list" className="-mx-2 space-y-1">
-                    {navigation.map((item) => (
-                      <li key={item.name}>
-                        <Link
-                          href={item.href}
-                          className={cn(
-                            item.current
-                              ? 'bg-gray-50 text-indigo-600 dark:bg-white/5 dark:text-white'
-                              : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white',
-                            'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold',
-                          )}
-                        >
-                          <item.icon
-                            aria-hidden="true"
+                    {navigation.map((item) => {
+                      const isCurrent = pathname === item.href;
+                      return (
+                        <li key={item.name}>
+                          <Link
+                            href={item.href}
                             className={cn(
-                              item.current
-                                ? 'text-indigo-600 dark:text-white'
-                                : 'text-gray-400 group-hover:text-indigo-600 dark:group-hover:text-white',
-                              'size-6 shrink-0',
+                              isCurrent
+                                ? 'bg-gray-50 text-indigo-600 dark:bg-white/5 dark:text-white'
+                                : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white',
+                              'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold',
                             )}
-                          />
-                          {item.name}
-                        </Link>
-                      </li>
-                    ))}
+                          >
+                            <item.icon
+                              aria-hidden="true"
+                              className={cn(
+                                isCurrent
+                                  ? 'text-indigo-600 dark:text-white'
+                                  : 'text-gray-400 group-hover:text-indigo-600 dark:group-hover:text-white',
+                                'size-6 shrink-0',
+                              )}
+                            />
+                            {item.name}
+                          </Link>
+                        </li>
+                      );
+                    })}
                   </ul>
                 </li>
                 <li>
@@ -299,31 +252,34 @@ export default function SidebarWithHeader({
                     Your teams
                   </div>
                   <ul role="list" className="-mx-2 mt-2 space-y-1">
-                    {teams.map((team) => (
-                      <li key={team.name}>
-                        <Link
-                          href={team.href}
-                          className={cn(
-                            team.current
-                              ? 'bg-gray-50 text-indigo-600 dark:bg-white/5 dark:text-white'
-                              : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white',
-                            'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold',
-                          )}
-                        >
-                          <span
+                    {teams.map((team) => {
+                      const isCurrent = pathname === team.href;
+                      return (
+                        <li key={team.name}>
+                          <Link
+                            href={team.href}
                             className={cn(
-                              team.current
-                                ? 'border-indigo-600 text-indigo-600 dark:border-white/20 dark:text-white'
-                                : 'border-gray-200 text-gray-400 group-hover:border-indigo-600 group-hover:text-indigo-600 dark:border-white/10 dark:group-hover:border-white/20 dark:group-hover:text-white',
-                              'flex size-6 shrink-0 items-center justify-center rounded-lg border bg-white text-[0.625rem] font-medium dark:bg-white/5',
+                              isCurrent
+                                ? 'bg-gray-50 text-indigo-600 dark:bg-white/5 dark:text-white'
+                                : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white',
+                              'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold',
                             )}
                           >
-                            {team.initial}
-                          </span>
-                          <span className="truncate">{team.name}</span>
-                        </Link>
-                      </li>
-                    ))}
+                            <span
+                              className={cn(
+                                isCurrent
+                                  ? 'border-indigo-600 text-indigo-600 dark:border-white/20 dark:text-white'
+                                  : 'border-gray-200 text-gray-400 group-hover:border-indigo-600 group-hover:text-indigo-600 dark:border-white/10 dark:group-hover:border-white/20 dark:group-hover:text-white',
+                                'flex size-6 shrink-0 items-center justify-center rounded-lg border bg-white text-[0.625rem] font-medium dark:bg-white/5',
+                              )}
+                            >
+                              {team.initial}
+                            </span>
+                            <span className="truncate">{team.name}</span>
+                          </Link>
+                        </li>
+                      );
+                    })}
                   </ul>
                 </li>
                 <li className="mt-auto">
@@ -343,6 +299,7 @@ export default function SidebarWithHeader({
           </div>
         </div>
 
+        {/* main content area */}
         <div className="lg:pl-72">
           <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-xs sm:gap-x-6 sm:px-6 lg:px-8 dark:border-white/10 dark:bg-gray-900 dark:shadow-none">
             <button
@@ -354,7 +311,6 @@ export default function SidebarWithHeader({
               <Bars3Icon aria-hidden="true" className="size-6" />
             </button>
 
-            {/* Separator */}
             <div
               aria-hidden="true"
               className="h-6 w-px bg-gray-200 lg:hidden dark:bg-white/10"
@@ -388,14 +344,14 @@ export default function SidebarWithHeader({
                   className="hidden lg:block lg:h-6 lg:w-px lg:bg-gray-200 dark:lg:bg-white/10"
                 /> */}
 
-                {/* Profile dropdown */}
+                {/* profile dropdown */}
                 <Menu as="div" className="relative">
                   <MenuButton className="relative flex items-center">
                     <span className="absolute -inset-1.5" />
                     <span className="sr-only">Open user menu</span>
-                    {profileAvatarUrl ? (
+                    {avatarState.url ? (
                       <img
-                        src={profileAvatarUrl}
+                        src={avatarState.url}
                         alt="Avatar"
                         className="size-8 rounded-full bg-gray-50 outline -outline-offset-1 outline-black/5 dark:bg-gray-800 dark:outline-white/10"
                       />
@@ -410,7 +366,7 @@ export default function SidebarWithHeader({
                         aria-hidden="true"
                         className="ml-4 text-sm/6 font-semibold text-gray-900 dark:text-white"
                       >
-                        {profile?.full_name || user?.email || 'User'}
+                        {displayName}
                       </span>
                       <ChevronDownIcon
                         aria-hidden="true"
@@ -437,7 +393,7 @@ export default function SidebarWithHeader({
                               type="submit"
                               className="block w-full px-3 py-1 text-left text-sm/6 text-gray-900 data-focus:bg-gray-50 dark:text-white dark:data-focus:bg-white/5"
                             >
-                              Sign out
+                              {item.name}
                             </button>
                           </form>
                         )}

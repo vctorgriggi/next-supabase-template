@@ -1,25 +1,17 @@
-import { fetchProfileWithClient } from '@/lib/supabase/profile';
-import { createClient as CreateServerClient } from '@/lib/supabase/server';
+import { requireAuth } from '@/lib/supabase/auth';
+import { fetchProfile } from '@/lib/supabase/profile.server';
 
 import AccountForm from './account-form';
 
 export default async function Account() {
-  const supabase = await CreateServerClient();
+  const user = await requireAuth();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const result = await fetchProfile(user.id);
 
-  if (!user) {
-    return <div>Unauthorized</div>;
-  }
+  const profile = result.success ? result.data : null;
 
-  let profile = null;
-  try {
-    profile = await fetchProfileWithClient(supabase, user.id);
-  } catch (err) {
-    console.warn('failed to load profile on server:', err);
-    profile = null;
+  if (!result.success) {
+    console.warn('failed to load profile on server:', result.error);
   }
 
   return <AccountForm user={user} initialProfile={profile} />;
