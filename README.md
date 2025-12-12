@@ -1,100 +1,102 @@
-# Next.js + Supabase Template ✨
+# Next.js + Supabase Template
 
-Um template completo e pronto para produção que combina Next.js 16 com Supabase. Inclui autenticação server-side, upload otimizado de imagens, formulários type-safe com validação,e uma arquitetura escalável com separação clara entre cliente e servidor.
+Production-ready full-stack template combining Next.js 16 with Supabase. Includes server-side authentication, optimized image uploads, type-safe forms with validation, and a scalable architecture with clear client/server separation.
 
 [![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js)](https://nextjs.org/)
 [![Supabase](https://img.shields.io/badge/Supabase-2.0-3ECF8E?style=flat-square&logo=supabase&logoColor=white)](https://supabase.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-38bdf8?style=flat-square&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 
-[Demo](https://next-supabase-template.vercel.app) • [Documentação](docs/inicio.md) • [Reportar Bug](https://github.com/vctorgriggi/next-supabase-template/issues)
+[Demo](https://next-supabase-template.vercel.app) • [Documentation](docs/inicio.md) • [Report Bug](https://github.com/vctorgriggi/next-supabase-template/issues)
 
-![Demo do Template](public/demo-auth-flow.gif)
+> 🇧🇷 **Portuguese Documentation:** All technical documentation is available in Portuguese at [docs/](docs/)
+
+![Template Demo](public/demo-auth-flow.gif)
 
 ---
 
-## ✨ Funcionalidades
+## ✨ Features
 
-🔐 **Autenticação Completa** — Sistema de auth com email/senha, confirmação e refresh automático  
-👤 **Perfis de Usuário** — Gerenciamento de perfil com upload de avatar e validação  
-📁 **Storage Otimizado** — Upload com compressão automática e preview em tempo real  
-📝 **Formulários Inteligentes** — React Hook Form + Zod com validação client e server  
-🔄 **Cache Eficiente** — TanStack Query com SSR e invalidação automática  
-🛡️ **Type-Safe** — TypeScript em todo o projeto com tipos inferidos  
-🚀 **Server Actions** — Mutações seguras sem API routes  
-🎯 **Error Handling** — Padrão Result<T> para tratamento consistente  
-🎨 **UI Moderna** — Tailwind CSS 4 + Headless UI components  
-📱 **Responsivo** — Design mobile-first e otimizado
+🔐 **Complete Authentication** — Email/password auth with confirmation and automatic refresh  
+👤 **User Profiles** — Profile management with avatar upload and validation  
+📁 **Optimized Storage** — Upload with automatic compression and real-time preview  
+📝 **Smart Forms** — React Hook Form + Zod with client and server validation  
+🔄 **Efficient Cache** — TanStack Query with SSR and automatic invalidation  
+🛡️ **Type-Safe** — Full TypeScript support with inferred types  
+🚀 **Server Actions** — Secure mutations without API routes  
+🎯 **Error Handling** — Consistent Result<T> pattern  
+🎨 **Modern UI** — Tailwind CSS 4 + Headless UI components  
+📱 **Responsive** — Mobile-first optimized design
 
 ![Dashboard Interface](public/screenshot-dashboard.png)
 
 ---
 
-## 🚀 Início Rápido
+## 🚀 Quick Start
 
 ```bash
-# Clone o repositório
+# Clone the repository
 git clone https://github.com/vctorgriggi/next-supabase-template.git
 cd next-supabase-template
 
-# Instale as dependências
+# Install dependencies
 npm install
 
-# Configure as variáveis de ambiente
+# Set up environment variables
 cp .env.example .env.local
-# Edite .env.local com suas credenciais do Supabase
+# Edit .env.local with your Supabase credentials
 
-# Configure o banco de dados (veja docs/configuracao-supabase.md)
-# Execute os scripts SQL no Supabase SQL Editor
+# Set up the database (see docs/configuracao-supabase.md)
+# Run the SQL scripts in Supabase SQL Editor
 
-# Rode o projeto
+# Run the project
 npm run dev
 ```
 
-Abra [http://localhost:3000](http://localhost:3000) 🎉
+Open [http://localhost:3000](http://localhost:3000) 🎉
 
-> **📖 Guia detalhado:** [Documentação de início](docs/inicio.md)
-
----
-
-## 📚 Documentação
-
-**🎯 Essencial**
-
-- [Começando](docs/inicio.md)
-- [Arquitetura](docs/arquitetura.md)
-- [Configuração Supabase](docs/configuracao-supabase.md)
-
-**🔧 Funcionalidades**
-
-- [Autenticação](docs/autenticacao.md)
-- [Formulários](docs/formularios.md)
-- [Upload de Arquivos](docs/upload-arquivos.md)
+> **📖 Detailed guide:** [Getting started documentation](docs/inicio.md)
 
 ---
 
-## 🏗️ Estrutura do Projeto
+## 📚 Documentation
+
+**🎯 Essential**
+
+- [Getting Started](docs/inicio.md)
+- [Architecture](docs/arquitetura.md)
+- [Supabase Setup](docs/configuracao-supabase.md)
+
+**🔧 Features**
+
+- [Authentication](docs/autenticacao.md)
+- [Forms](docs/formularios.md)
+- [File Uploads](docs/upload-arquivos.md)
+
+---
+
+## 🏗️ Project Structure
 
 ```
 ├── app/                      # Next.js App Router
-│   ├── (public)/            # Rotas públicas (login, register)
-│   └── (private)/           # Rotas protegidas (dashboard, account)
-├── components/              # Componentes React
-│   ├── ui/                  # Componentes UI reutilizáveis
-│   ├── auth/                # Componentes relacionados a auth
-│   └── dashboard/           # Componentes do dashboard
+│   ├── (public)/            # Public routes (login, register)
+│   └── (private)/           # Protected routes (dashboard, account)
+├── components/              # React components
+│   ├── ui/                  # Reusable UI components
+│   ├── auth/                # Auth-related components
+│   └── dashboard/           # Dashboard components
 ├── hooks/                   # Custom React hooks
-├── lib/                     # Funções utilitárias
+├── lib/                     # Utility functions
 │   ├── actions/             # Server Actions
-│   ├── supabase/            # Clientes Supabase e helpers
-│   ├── validators/          # Schemas Zod
-│   └── types/               # Tipos TypeScript
-└── public/                  # Assets estáticos
+│   ├── supabase/            # Supabase clients and helpers
+│   ├── validators/          # Zod schemas
+│   └── types/               # TypeScript types
+└── public/                  # Static assets
 ```
 
 ---
 
-## 🛠️ Stack
+## 🛠️ Tech Stack
 
 **Framework** → [Next.js 16](https://nextjs.org/) (App Router)  
 **Backend** → [Supabase](https://supabase.com/) (Auth • Database • Storage)  
@@ -106,14 +108,14 @@ Abra [http://localhost:3000](http://localhost:3000) 🎉
 
 ---
 
-## 📝 Padrões de Código
+## 📝 Code Patterns
 
-### Error Handling com Result<T>
+### Error Handling with Result<T>
 
 ```typescript
 type Result<T> = { success: true; data: T } | { success: false; error: string };
 
-// Uso
+// Usage
 const result = await updateProfile(data);
 if (!result.success) {
   notifyError(result.error);
@@ -121,7 +123,7 @@ if (!result.success) {
 }
 ```
 
-### Server Actions Type-Safe
+### Type-Safe Server Actions
 
 ```typescript
 'use server';
@@ -130,40 +132,40 @@ export async function updateProfile(
   updates: ProfileUpdate,
 ): Promise<Result<boolean>> {
   const user = await requireAuth();
-  // ... lógica no servidor
+  // ... server-side logic
 }
 ```
 
-### Proteção de Rotas
+### Route Protection
 
 ```typescript
 // Server Component
-const user = await requireAuth(); // redireciona se não logado
-const user = await getCurrentUser(); // retorna null
+const user = await requireAuth(); // redirects if not logged in
+const user = await getCurrentUser(); // returns null
 ```
 
 ---
 
 ## 🚀 Deploy
 
-[![Deploy com Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/vctorgriggi/next-supabase-template)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/vctorgriggi/next-supabase-template)
 
 ---
 
-## 🙏 Créditos
+## 🙏 Credits
 
-Baseado no [tutorial oficial do Supabase](https://supabase.com/docs/guides/getting-started/tutorials/with-nextjs) com melhorias significativas:
+Based on the [official Supabase tutorial](https://supabase.com/docs/guides/getting-started/tutorials/with-nextjs) with significant improvements:
 
-✅ Separação server/client  
+✅ Server/client separation  
 ✅ Server Actions + Result<T>  
-✅ Custom hooks reutilizáveis  
-✅ RLS policies otimizadas  
-✅ Storage público com CDN  
-✅ Compressão de imagens  
-✅ Validação Zod completa
+✅ Reusable custom hooks  
+✅ Optimized RLS policies  
+✅ Public storage with CDN  
+✅ Image compression  
+✅ Complete Zod validation
 
 ---
 
 **[Issues](https://github.com/vctorgriggi/next-supabase-template/issues)** • **[Discussions](https://github.com/vctorgriggi/next-supabase-template/discussions)** • **[License](LICENSE)**
 
-Feito com ❤️ por [vctorgriggi](https://github.com/vctorgriggi)
+Made with ❤️ by [vctorgriggi](https://github.com/vctorgriggi)
