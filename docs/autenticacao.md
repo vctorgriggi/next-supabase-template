@@ -260,15 +260,24 @@ export default async function HomePage() {
 }
 ```
 
-### Middleware (Automático)
+### Proxy (Automático)
 
-O middleware refresha tokens automaticamente:
+O proxy refresha tokens automaticamente:
 
 ```typescript
-// middleware.ts
-export async function middleware(request: NextRequest) {
+// proxy.ts (raiz do projeto)
+import { type NextRequest } from 'next/server';
+import { updateSession } from '@/lib/supabase/proxy';
+
+export async function proxy(request: NextRequest) {
   return await updateSession(request);
 }
+
+export const config = {
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
+};
 ```
 
 **O que faz:**
@@ -277,6 +286,42 @@ export async function middleware(request: NextRequest) {
 2. Refresh automático se necessário
 3. Atualiza cookies
 4. Permite requisição continuar
+
+**Implementação do helper:**
+
+```typescript
+// lib/supabase/proxy.ts
+import { createServerClient } from '@supabase/ssr';
+import { NextResponse, type NextRequest } from 'next/server';
+
+export async function updateSession(request: NextRequest) {
+  let response = NextResponse.next({ request });
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value),
+          );
+          response = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options),
+          );
+        },
+      },
+    },
+  );
+
+  await supabase.auth.getUser();
+  return response;
+}
+```
 
 ## Estrutura de Arquivos Auth
 
@@ -568,9 +613,13 @@ export async function GET(request: Request) {
 
 ### Token expira muito rápido
 
-**Causa:** Middleware não está refreshando
+**Causa:** Proxy não está configurado corretamente
 
-**Solução:** Verifique se `middleware.ts` está na raiz do projeto
+**Solução:**
+
+1. Verifique se `proxy.ts` existe na raiz do projeto
+2. Verifique se `lib/supabase/proxy.ts` tem a função `updateSession`
+3. Certifique-se de que o arquivo raiz está importando de `@/lib/supabase/proxy`
 
 ### "Failed to fetch" ao chamar Server Action
 

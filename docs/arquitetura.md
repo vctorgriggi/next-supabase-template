@@ -352,13 +352,22 @@ UI updates with new avatar
 const user = await requireAuth(); // redireciona se não autenticado
 ```
 
-**Middleware:**
+**Proxy:**
 
 ```typescript
-// middleware.ts
-export async function middleware(request: NextRequest) {
-  return await updateSession(request); // refresh token
+// proxy.ts (raiz do projeto)
+import { type NextRequest } from 'next/server';
+import { updateSession } from '@/lib/supabase/proxy';
+
+export async function proxy(request: NextRequest) {
+  return await updateSession(request);
 }
+
+export const config = {
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
+};
 ```
 
 ## Performance
