@@ -1,7 +1,6 @@
+import AccountForm from '@/components/account/account-form';
 import { requireAuth } from '@/lib/supabase/auth';
 import { fetchProfile } from '@/lib/supabase/profile.server';
-
-import AccountForm from './account-form';
 
 export default async function Account() {
   const user = await requireAuth();
