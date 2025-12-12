@@ -7,7 +7,7 @@ Production-ready full-stack template combining Next.js 16 with Supabase. Include
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-38bdf8?style=flat-square&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 
-[Demo](https://next-supabase-template.vercel.app) • [Documentation](docs/inicio.md) • [Report Bug](https://github.com/vctorgriggi/next-supabase-template/issues)
+[Demo](https://next-supabase-template-zeta.vercel.app/) • [Documentation](docs/inicio.md) • [Report Bug](https://github.com/vctorgriggi/next-supabase-template/issues)
 
 > 🇧🇷 **Portuguese Documentation:** All technical documentation is available in Portuguese at [docs/](docs/)
 
