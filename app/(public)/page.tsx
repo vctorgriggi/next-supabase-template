@@ -75,12 +75,13 @@ export default function Home() {
                         <pre className="text-md max-h-96 overflow-auto text-gray-200">
                           <code>
                             {`import { useState } from 'react'
-import { supabase } from '@/lib/supabase/client'
+import { getBrowserClient } from '@/lib/supabase/client'
 
 export function Example() {
   const [user, setUser] = useState(null)
 
   async function loadUser() {
+    const supabase = getBrowserClient()
     const { data } = await supabase.auth.getUser()
     setUser(data.user)
   }
