@@ -1,7 +1,7 @@
 import { dehydrate, QueryClient } from '@tanstack/react-query';
 
 import SidebarWithHeader from '@/components/dashboard/sidebar-with-header';
-import QueryProvider from '@/components/providers/QueryProvider';
+import QueryProvider from '@/components/providers/query-provider';
 import { requireAuth } from '@/lib/supabase/auth';
 import { prefetchProfile } from '@/lib/supabase/profile.server';
 

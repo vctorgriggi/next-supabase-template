@@ -3,7 +3,7 @@ import './globals.css';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 
-import NotificationsProvider from '@/components/ui/NotificationsProvider';
+import NotificationsProvider from '@/components/ui/notifications-provider';
 
 const inter = Inter({
   variable: '--font-inter',
