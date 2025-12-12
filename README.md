@@ -1,4 +1,4 @@
-# Next.js + Supabase Template
+# Next.js + Supabase Template ✨
 
 Production-ready full-stack template combining Next.js 16 with Supabase. Includes server-side authentication, optimized image uploads, type-safe forms with validation, and a scalable architecture with clear client/server separation.
 
