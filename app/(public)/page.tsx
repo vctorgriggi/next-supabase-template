@@ -20,12 +20,14 @@ export default function Home() {
                   src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=500"
                   className="h-11 not-dark:hidden"
                 />
-                <h1 className="text-foreground mt-10 text-4xl font-semibold tracking-tight text-pretty sm:text-6xl">
-                  Starter template for Supabase + Next.js
+                <h1 className="text-foreground mt-10 text-3xl font-semibold tracking-tight text-pretty sm:text-5xl">
+                  {"The Next.js + Supabase template you've been looking for"}
                 </h1>
                 <p className="mt-8 text-lg font-medium text-pretty text-gray-500 sm:text-xl/8 dark:text-gray-400">
-                  Includes auth, protected routes, and a minimal project layout
-                  to build on.
+                  Type-safe, production-ready, and built with modern best
+                  practices. <br />
+                  Authentication, database, storage, and forms—all set up and
+                  ready to go.
                 </p>
                 <div className="mt-10 flex items-center gap-x-6">
                   <Link
