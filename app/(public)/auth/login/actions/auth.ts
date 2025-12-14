@@ -4,39 +4,39 @@ import { redirect } from 'next/navigation';
 
 import { APP_ROUTES } from '@/constants/app-routes';
 import { signInWithPassword, signOut, signUp } from '@/lib/supabase/auth';
+import { failure } from '@/lib/types/result';
+import { loginSchema, registerSchema } from '@/lib/validators/auth';
 
-export async function login(formData: FormData) {
-  const email = formData.get('email');
-  const password = formData.get('password');
+export async function login(data: unknown) {
+  const parsed = loginSchema.safeParse(data);
 
-  if (!email || !password) {
-    return { error: 'email and password are required' };
+  if (!parsed.success) {
+    return failure('bad request');
   }
 
   const result = await signInWithPassword(
-    email.toString(),
-    password.toString(),
+    parsed.data.email,
+    parsed.data.password,
   );
 
   if (!result.success) {
-    return { error: result.error };
+    return failure(result.error);
   }
 
   redirect(APP_ROUTES.PRIVATE.DASHBOARD);
 }
 
-export async function register(formData: FormData) {
-  const email = formData.get('email');
-  const password = formData.get('password');
+export async function register(data: unknown) {
+  const parsed = registerSchema.safeParse(data);
 
-  if (!email || !password) {
-    return { error: 'email and password are required' };
+  if (!parsed.success) {
+    return failure('bad request');
   }
 
-  const result = await signUp(email.toString(), password.toString());
+  const result = await signUp(parsed.data.email, parsed.data.password);
 
   if (!result.success) {
-    return { error: result.error };
+    return failure(result.error);
   }
 
   redirect(APP_ROUTES.PRIVATE.DASHBOARD);

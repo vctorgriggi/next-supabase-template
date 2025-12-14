@@ -19,11 +19,7 @@ export default function LoginForm() {
   });
 
   const onSubmit: SubmitHandler<LoginValues> = async (data) => {
-    const formData = new FormData();
-    formData.append('email', data.email);
-    formData.append('password', data.password);
-
-    const result = await login(formData);
+    const result = await login(data);
     if (result?.error) {
       notifyError(result.error);
     }

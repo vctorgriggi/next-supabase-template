@@ -27,7 +27,7 @@ export function useProfile(userId: string | undefined) {
       return result.data;
     },
     enabled: !!userId,
-    staleTime: 1000 * 60 * 5, // 5 min
+    staleTime: 1000 * 60 * 5,
   });
 
   return {

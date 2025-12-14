@@ -3,14 +3,18 @@
 import { revalidatePath } from 'next/cache';
 
 import { getServerClient } from '@/lib/supabase/server';
-import type { ProfileUpdate } from '@/lib/supabase/types';
 import type { Result } from '@/lib/types/result';
 import { failure, success } from '@/lib/types/result';
 
-export async function updateProfile(
-  updates: ProfileUpdate,
-): Promise<Result<boolean>> {
+import { accountSchema } from '../validators/account';
+
+export async function updateProfile(data: unknown): Promise<Result<boolean>> {
   try {
+    const parsed = accountSchema.safeParse(data);
+    if (!parsed.success) {
+      return failure('bad request');
+    }
+
     const supabase = await getServerClient();
     const {
       data: { user },
@@ -26,20 +30,12 @@ export async function updateProfile(
       return failure('not authenticated');
     }
 
-    if (!updates.username || updates.username.length < 3) {
-      return failure('username must be at least 3 characters long');
-    }
-
-    if (!updates.full_name || updates.full_name.length < 1) {
-      return failure('full name is required');
-    }
-
     const { error: updateError } = await supabase.from('profiles').upsert({
       id: user.id,
-      full_name: updates.full_name,
-      username: updates.username,
-      website: updates.website || null,
-      avatar_url: updates.avatar_url,
+      full_name: parsed.data.full_name,
+      username: parsed.data.username,
+      website: parsed.data.website,
+      avatar_url: parsed.data.avatar_url,
       updated_at: new Date().toISOString(),
     });
 

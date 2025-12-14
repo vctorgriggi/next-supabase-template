@@ -42,7 +42,7 @@ export async function confirmAvatar(
         await supabase.storage
           .from('avatars')
           .remove([previousPath])
-          .catch((e) => console.warn('Failed to delete previous avatar:', e));
+          .catch((e) => console.warn('failed to delete previous avatar:', e));
       }
 
       revalidatePath('/', 'layout');

@@ -2,18 +2,15 @@ import imageCompression from 'browser-image-compression';
 
 export async function compressImage(file: File): Promise<File> {
   const options = {
-    maxSizeMB: 0.2,
-    maxWidthOrHeight: 900,
-    useWebWorker: true,
+    maxSizeMB: 0.2, // 200 KB
+    maxWidthOrHeight: 900, // Max dimension
+    useWebWorker: true, // Use web worker for better performance
   };
 
   try {
     const compressedBlob = await imageCompression(file, options);
 
-    const ext = (compressedBlob.type.split('/')[1] || 'jpg').replace(
-      /[^a-z0-9]/gi,
-      '',
-    );
+    const ext = (compressedBlob.type.split('/')[1] || 'jpg').replace(/[^a-z0-9]/gi, '');
     const name = `${crypto.randomUUID()}.${ext}`;
 
     return new File([compressedBlob], name, {

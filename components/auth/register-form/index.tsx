@@ -19,11 +19,7 @@ export default function RegisterForm() {
   });
 
   const onSubmit: SubmitHandler<RegisterValues> = async (data) => {
-    const formData = new FormData();
-    formData.append('email', data.email);
-    formData.append('password', data.password);
-
-    const result = await register(formData);
+    const result = await register(data);
     if (result?.error) {
       notifyError(result.error);
     }

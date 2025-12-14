@@ -38,10 +38,6 @@ export async function signInWithPassword(
   email: string,
   password: string,
 ): Promise<Result<boolean>> {
-  if (!email || !password) {
-    return failure('email and password are required');
-  }
-
   const supabase = await getServerClient();
 
   const { error } = await supabase.auth.signInWithPassword({
@@ -62,10 +58,6 @@ export async function signUp(
   email: string,
   password: string,
 ): Promise<Result<boolean>> {
-  if (!email || !password) {
-    return failure('email and password are required');
-  }
-
   const supabase = await getServerClient();
 
   const { error } = await supabase.auth.signUp({
