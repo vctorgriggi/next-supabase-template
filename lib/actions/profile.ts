@@ -2,17 +2,23 @@
 
 import { revalidatePath } from 'next/cache';
 
+import { updateProfileDB } from '@/lib/supabase/profile.server';
 import { getServerClient } from '@/lib/supabase/server';
 import type { Result } from '@/lib/types/result';
 import { failure, success } from '@/lib/types/result';
 
 import { accountSchema } from '../validators/account';
 
+/**
+ * Server Action: Updates user profile with validation and authentication
+ * This is the main entry point for profile updates from client components
+ */
 export async function updateProfile(data: unknown): Promise<Result<boolean>> {
   try {
     const parsed = accountSchema.safeParse(data);
     if (!parsed.success) {
-      return failure('bad request');
+      console.warn('[updateProfile] Validation failed', { issues: parsed.error.issues });
+      return failure('Invalid input data');
     }
 
     const supabase = await getServerClient();
@@ -22,32 +28,25 @@ export async function updateProfile(data: unknown): Promise<Result<boolean>> {
     } = await supabase.auth.getUser();
 
     if (getUserError) {
-      console.error('getUser failed:', getUserError);
-      return failure('failed to get user');
+      console.error('[updateProfile] Authentication failed', { error: getUserError });
+      return failure('Authentication failed');
     }
 
     if (!user) {
-      return failure('not authenticated');
+      return failure('User is not authenticated');
     }
 
-    const { error: updateError } = await supabase.from('profiles').upsert({
-      id: user.id,
-      full_name: parsed.data.full_name,
-      username: parsed.data.username,
-      website: parsed.data.website,
-      avatar_url: parsed.data.avatar_url,
-      updated_at: new Date().toISOString(),
-    });
+    const result = await updateProfileDB(user.id, parsed.data);
 
-    if (updateError) {
-      console.error('update error:', updateError);
-      return failure(updateError.message);
+    if (!result.success) {
+      console.error('[updateProfile] Profile update failed', { userId: user.id, error: result.error });
+      return failure('Unable to update profile');
     }
 
     revalidatePath('/', 'layout');
     return success(true);
-  } catch (err) {
-    console.error('profile update error:', err);
-    return failure((err as Error)?.message ?? 'server error');
+  } catch (error) {
+    console.error('[updateProfile] Unhandled exception', { error });
+    return failure('Internal server error');
   }
 }

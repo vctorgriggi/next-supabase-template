@@ -20,7 +20,7 @@ export default function RegisterForm() {
 
   const onSubmit: SubmitHandler<RegisterValues> = async (data) => {
     const result = await register(data);
-    if (result?.error) {
+    if (!result.success) {
       notifyError(result.error);
     }
   };

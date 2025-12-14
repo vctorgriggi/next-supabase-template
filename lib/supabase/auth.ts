@@ -12,6 +12,7 @@ export async function getCurrentUser() {
   const { data, error } = await supabase.auth.getUser();
 
   if (error || !data?.user) return null;
+
   return data.user;
 }
 
@@ -33,7 +34,7 @@ export async function requireGuest() {
   }
 }
 
-// auth actions
+// auth infra
 export async function signInWithPassword(
   email: string,
   password: string,
@@ -46,8 +47,8 @@ export async function signInWithPassword(
   });
 
   if (error) {
-    console.error('sign in error:', error);
-    return failure(error.message);
+    console.error('[auth] Sign in failed', { error });
+    return failure('AUTH_SIGN_IN_FAILED');
   }
 
   revalidatePath('/', 'layout');
@@ -66,8 +67,8 @@ export async function signUp(
   });
 
   if (error) {
-    console.error('sign up error:', error);
-    return failure(error.message);
+    console.error('[auth] Sign up failed', { error });
+    return failure('AUTH_SIGN_UP_FAILED');
   }
 
   revalidatePath('/', 'layout');
@@ -82,14 +83,14 @@ export async function signOut(): Promise<Result<boolean>> {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return failure('no user to sign out');
+    return failure('AUTH_NO_USER');
   }
 
   const { error } = await supabase.auth.signOut();
 
   if (error) {
-    console.error('sign out error:', error);
-    return failure(error.message);
+    console.error('[auth] Sign out failed', { error });
+    return failure('AUTH_SIGN_OUT_FAILED');
   }
 
   revalidatePath('/', 'layout');

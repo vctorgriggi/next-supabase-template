@@ -20,7 +20,7 @@ export default function LoginForm() {
 
   const onSubmit: SubmitHandler<LoginValues> = async (data) => {
     const result = await login(data);
-    if (result?.error) {
+    if (!result.success) {
       notifyError(result.error);
     }
   };

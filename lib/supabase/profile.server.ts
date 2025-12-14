@@ -1,41 +1,35 @@
 import type { QueryClient } from '@tanstack/react-query';
 
 import type { Result } from '@/lib/types/result';
-import { failure, success } from '@/lib/types/result';
 
+import { fetchProfileWithClient, updateProfileWithClient } from './profile';
 import { getServerClient } from './server';
 import type { Profile, ProfileUpdate } from './types';
 
+/**
+ * Fetches a user profile using server-side Supabase client
+ */
 export async function fetchProfile(userId: string): Promise<Result<Profile>> {
-  if (!userId) {
-    return failure('user ID is required');
-  }
-
   const supabase = await getServerClient();
-
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('full_name, username, website, avatar_url')
-    .eq('id', userId)
-    .single();
-
-  if (error) {
-    console.error('error fetching profile:', error);
-    return failure(error.message);
-  }
-
-  if (!data) {
-    return failure('profile not found');
-  }
-
-  return success({
-    full_name: data.full_name ?? '',
-    username: data.username ?? '',
-    website: data.website ?? null,
-    avatar_url: data.avatar_url ?? null,
-  });
+  return fetchProfileWithClient(supabase, userId);
 }
 
+/**
+ * Updates a user profile in the database
+ * Note: This function does NOT validate input or check authentication
+ * Use the Server Action (lib/actions/profile.ts) for user-initiated updates
+ */
+export async function updateProfileDB(
+  userId: string,
+  updates: ProfileUpdate,
+): Promise<Result<boolean>> {
+  const supabase = await getServerClient();
+  return updateProfileWithClient(supabase, userId, updates);
+}
+
+/**
+ * Prefetches a user profile for React Query cache
+ */
 export async function prefetchProfile(
   queryClient: QueryClient,
   userId: string,
@@ -51,29 +45,6 @@ export async function prefetchProfile(
       staleTime: 1000 * 60 * 5,
     });
   } catch (error) {
-    console.warn('failed to prefetch profile:', error);
+    console.warn('Failed to prefetch profile for user', { userId, error });
   }
-}
-
-export async function updateProfile(
-  userId: string,
-  updates: ProfileUpdate,
-): Promise<Result<boolean>> {
-  if (!userId) {
-    return failure('user ID is required');
-  }
-
-  const supabase = await getServerClient();
-
-  const { error } = await supabase
-    .from('profiles')
-    .update({ ...updates, updated_at: new Date().toISOString() })
-    .eq('id', userId);
-
-  if (error) {
-    console.error('error updating profile:', error);
-    return failure(error.message);
-  }
-
-  return success(true);
 }
