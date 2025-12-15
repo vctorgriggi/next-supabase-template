@@ -180,7 +180,7 @@ export default function Avatar({
         ) : avatarState.url ? (
           <img
             src={avatarState.url}
-            alt="Avatar"
+            alt="User avatar"
             className="rounded-full object-cover"
             style={{ width: size, height: size }}
           />

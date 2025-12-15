@@ -8,12 +8,12 @@ export default function Error() {
       <header className="mx-auto w-full max-w-7xl px-6 pt-6 sm:pt-10 lg:col-span-2 lg:col-start-1 lg:row-start-1 lg:px-8">
         <span className="sr-only">Your Company</span>
         <img
-          alt=""
+          alt="Your Company"
           src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=600"
           className="h-10 w-auto sm:h-12 dark:hidden"
         />
         <img
-          alt=""
+          alt="Your Company"
           src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=500"
           className="h-10 w-auto not-dark:hidden sm:h-12"
         />
@@ -42,12 +42,12 @@ export default function Error() {
       </main>
       <div className="hidden lg:relative lg:col-start-2 lg:row-start-1 lg:row-end-4 lg:block">
         <img
-          alt=""
+          alt="Error background"
           src="https://images.unsplash.com/photo-1470847355775-e0e3c35a9a2c?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=1825&q=80"
           className="absolute inset-0 size-full object-cover not-dark:hidden"
         />
         <img
-          alt=""
+          alt="Error background"
           src="https://images.unsplash.com/photo-1583585635793-0e1894c169bd?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=1825&q=80"
           className="absolute inset-0 size-full object-cover dark:hidden"
         />
