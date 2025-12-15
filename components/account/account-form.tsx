@@ -8,6 +8,7 @@ import { useForm } from 'react-hook-form';
 
 import Button from '@/components/ui/button';
 import InputWithLabel from '@/components/ui/input';
+import { useProfile } from '@/hooks/use-profile';
 import { confirmAvatar } from '@/lib/actions/avatar';
 import { updateProfile } from '@/lib/actions/profile';
 import { notifyError, notifySuccess } from '@/lib/ui/notifications';
@@ -15,15 +16,12 @@ import { accountSchema, AccountValues } from '@/lib/validators/account';
 
 import Avatar from './avatar';
 
-export default function AccountForm({
-  user,
-  initialProfile = null,
-}: {
-  user: User | null;
-  initialProfile?: AccountValues | null;
-}) {
+export default function AccountForm({ user }: { user: User | null }) {
   const queryClient = useQueryClient();
   const [loading, setLoading] = React.useState(false);
+
+  // ✅ Usa o hook que pega do cache do prefetch!
+  const { profile, isLoading: isLoadingProfile } = useProfile(user?.id);
 
   const confirmMutation = useMutation({
     mutationFn: async (payload: {
@@ -65,7 +63,7 @@ export default function AccountForm({
     reset,
   } = useForm<AccountValues>({
     resolver: zodResolver(accountSchema),
-    defaultValues: initialProfile || {
+    defaultValues: {
       full_name: '',
       username: '',
       website: null,
@@ -74,14 +72,26 @@ export default function AccountForm({
   });
 
   const avatarUrl = watch('avatar_url');
-  const initialValuesRef = React.useRef<AccountValues>(
-    initialProfile || {
-      full_name: '',
-      username: '',
-      website: null,
-      avatar_url: null,
-    },
-  );
+  const initialValuesRef = React.useRef<AccountValues>({
+    full_name: '',
+    username: '',
+    website: null,
+    avatar_url: null,
+  });
+
+  // ✅ Atualiza o form quando o profile carregar
+  React.useEffect(() => {
+    if (profile) {
+      const values: AccountValues = {
+        full_name: profile.full_name || '',
+        username: profile.username || '',
+        website: profile.website || null,
+        avatar_url: profile.avatar_url || null,
+      };
+      reset(values);
+      initialValuesRef.current = values;
+    }
+  }, [profile, reset]);
 
   async function handleAvatarUpload(filePath: string | null) {
     if (!user) return;
@@ -156,6 +166,17 @@ export default function AccountForm({
 
   function handleCancel() {
     reset(initialValuesRef.current);
+  }
+
+  // ✅ Loading state enquanto carrega o profile
+  if (isLoadingProfile) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-sm text-gray-600 dark:text-gray-400">
+          Loading profile...
+        </div>
+      </div>
+    );
   }
 
   return (
