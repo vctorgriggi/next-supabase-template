@@ -4,12 +4,6 @@ Validação e submissão type-safe com React Hook Form + Zod.
 
 ---
 
-## 🎯 Stack de Formulários# Formulários
-
-Validação e submissão type-safe com React Hook Form + Zod.
-
----
-
 ## 🎯 Stack de Formulários
 
 - **React Hook Form** - Gerenciamento de estado e validação
