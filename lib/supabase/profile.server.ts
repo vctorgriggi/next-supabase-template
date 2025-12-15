@@ -6,9 +6,7 @@ import { fetchProfileWithClient, updateProfileWithClient } from './profile';
 import { getServerClient } from './server';
 import type { Profile, ProfileUpdate } from './types';
 
-/**
- * Fetches a user profile using server-side Supabase client
- */
+// fetches a user profile using server-side Supabase client
 export async function fetchProfile(userId: string): Promise<Result<Profile>> {
   const supabase = await getServerClient();
   return fetchProfileWithClient(supabase, userId);

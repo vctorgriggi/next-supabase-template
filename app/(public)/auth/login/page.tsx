@@ -14,22 +14,22 @@ export default async function Login() {
           <div>
             <img
               alt="Your Company"
-              src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=600"
+              src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=500"
               className="h-10 w-auto dark:hidden"
             />
             <img
               alt="Your Company"
-              src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=500"
+              src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=600"
               className="h-10 w-auto not-dark:hidden"
             />
-            <h2 className="mt-8 text-2xl/9 font-bold tracking-tight text-gray-900 dark:text-white">
+            <h2 className="text-foreground mt-8 text-2xl/9 font-bold tracking-tight">
               Sign in to your account
             </h2>
-            <p className="mt-2 text-sm/6 text-gray-500 dark:text-gray-400">
+            <p className="text-foreground/60 mt-2 text-sm/6">
               {"Don't have an account? "}
               <Link
                 href={APP_ROUTES.AUTH.REGISTER}
-                className="font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+                className="font-semibold text-indigo-600 hover:text-indigo-500"
               >
                 Sign up
               </Link>

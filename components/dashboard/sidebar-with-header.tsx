@@ -65,8 +65,8 @@ export default function SidebarWithHeader({
 
   return (
     <React.Fragment>
+      {/* mobile sidebar */}
       <div>
-        {/* mobile sidebar */}
         <Dialog
           open={sidebarOpen}
           onClose={setSidebarOpen}
@@ -99,17 +99,12 @@ export default function SidebarWithHeader({
               </TransitionChild>
 
               {/* mobile Sidebar content */}
-              <div className="relative flex grow flex-col gap-y-5 overflow-y-auto bg-white px-6 pb-4 dark:bg-gray-900 dark:ring dark:ring-white/10 dark:before:pointer-events-none dark:before:absolute dark:before:inset-0 dark:before:bg-black/10">
+              <div className="bg-background relative flex grow flex-col gap-y-5 overflow-y-auto px-6 pb-4 ring-1 ring-white/10 before:pointer-events-none before:absolute before:inset-0 before:bg-black/10">
                 <div className="relative flex h-16 shrink-0 items-center">
                   <img
                     alt="Your Company"
-                    src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=600"
-                    className="h-8 w-auto dark:hidden"
-                  />
-                  <img
-                    alt="Your Company"
                     src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=500"
-                    className="h-8 w-auto not-dark:hidden"
+                    className="h-8 w-auto"
                   />
                 </div>
                 <nav className="relative flex flex-1 flex-col">
@@ -124,19 +119,14 @@ export default function SidebarWithHeader({
                                 href={item.href}
                                 className={cn(
                                   isCurrent
-                                    ? 'bg-gray-50 text-indigo-600 dark:bg-white/5 dark:text-white'
-                                    : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white',
+                                    ? 'bg-white/5 text-white'
+                                    : 'text-gray-400 hover:bg-white/5 hover:text-white',
                                   'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold',
                                 )}
                               >
                                 <item.icon
                                   aria-hidden="true"
-                                  className={cn(
-                                    isCurrent
-                                      ? 'text-indigo-600 dark:text-white'
-                                      : 'text-gray-400 group-hover:text-indigo-600 dark:group-hover:text-white',
-                                    'size-6 shrink-0',
-                                  )}
+                                  className="size-6 shrink-0"
                                 />
                                 {item.name}
                               </Link>
@@ -154,43 +144,36 @@ export default function SidebarWithHeader({
                           const isCurrent = pathname === team.href;
                           return (
                             <li key={team.name}>
-                              <Link
+                              <a
                                 href={team.href}
                                 className={cn(
                                   isCurrent
-                                    ? 'bg-gray-50 text-indigo-600 dark:bg-white/5 dark:text-white'
-                                    : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white',
+                                    ? 'bg-white/5 text-white'
+                                    : 'text-gray-400 hover:bg-white/5 hover:text-white',
                                   'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold',
                                 )}
                               >
-                                <span
-                                  className={cn(
-                                    isCurrent
-                                      ? 'border-indigo-600 text-indigo-600 dark:border-white/20 dark:text-white'
-                                      : 'border-gray-200 text-gray-400 group-hover:border-indigo-600 group-hover:text-indigo-600 dark:border-white/10 dark:group-hover:border-white/20 dark:group-hover:text-white',
-                                    'flex size-6 shrink-0 items-center justify-center rounded-lg border bg-white text-[0.625rem] font-medium dark:bg-white/5',
-                                  )}
-                                >
+                                <span className="flex size-6 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[0.625rem] font-medium text-gray-400 group-hover:border-white/20 group-hover:text-white">
                                   {team.initial}
                                 </span>
                                 <span className="truncate">{team.name}</span>
-                              </Link>
+                              </a>
                             </li>
                           );
                         })}
                       </ul>
                     </li>
                     <li className="mt-auto">
-                      <Link
+                      <a
                         href="#"
-                        className="group -mx-2 flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-50 hover:text-indigo-600 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-white"
+                        className="group -mx-2 flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-400 hover:bg-white/5 hover:text-white"
                       >
                         <Cog6ToothIcon
                           aria-hidden="true"
-                          className="size-6 shrink-0 text-gray-400 group-hover:text-indigo-600 dark:group-hover:text-white"
+                          className="size-6 shrink-0"
                         />
                         Settings
-                      </Link>
+                      </a>
                     </li>
                   </ul>
                 </nav>
@@ -200,18 +183,13 @@ export default function SidebarWithHeader({
         </Dialog>
 
         {/* desktop sidebar */}
-        <div className="hidden bg-gray-900 lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
-          <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white px-6 pb-4 dark:border-white/10 dark:bg-black/10">
+        <div className="hidden bg-gray-900 ring-1 ring-white/10 lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
+          <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-black/10 px-6 pb-4">
             <div className="flex h-16 shrink-0 items-center">
               <img
                 alt="Your Company"
-                src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=600"
-                className="h-8 w-auto dark:hidden"
-              />
-              <img
-                alt="Your Company"
                 src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=500"
-                className="h-8 w-auto not-dark:hidden"
+                className="h-8 w-auto"
               />
             </div>
             <nav className="flex flex-1 flex-col">
@@ -226,19 +204,14 @@ export default function SidebarWithHeader({
                             href={item.href}
                             className={cn(
                               isCurrent
-                                ? 'bg-gray-50 text-indigo-600 dark:bg-white/5 dark:text-white'
-                                : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white',
+                                ? 'bg-white/5 text-white'
+                                : 'text-gray-400 hover:bg-white/5 hover:text-white',
                               'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold',
                             )}
                           >
                             <item.icon
                               aria-hidden="true"
-                              className={cn(
-                                isCurrent
-                                  ? 'text-indigo-600 dark:text-white'
-                                  : 'text-gray-400 group-hover:text-indigo-600 dark:group-hover:text-white',
-                                'size-6 shrink-0',
-                              )}
+                              className="size-6 shrink-0"
                             />
                             {item.name}
                           </Link>
@@ -256,43 +229,36 @@ export default function SidebarWithHeader({
                       const isCurrent = pathname === team.href;
                       return (
                         <li key={team.name}>
-                          <Link
+                          <a
                             href={team.href}
                             className={cn(
                               isCurrent
-                                ? 'bg-gray-50 text-indigo-600 dark:bg-white/5 dark:text-white'
-                                : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white',
+                                ? 'bg-white/5 text-white'
+                                : 'text-gray-400 hover:bg-white/5 hover:text-white',
                               'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold',
                             )}
                           >
-                            <span
-                              className={cn(
-                                isCurrent
-                                  ? 'border-indigo-600 text-indigo-600 dark:border-white/20 dark:text-white'
-                                  : 'border-gray-200 text-gray-400 group-hover:border-indigo-600 group-hover:text-indigo-600 dark:border-white/10 dark:group-hover:border-white/20 dark:group-hover:text-white',
-                                'flex size-6 shrink-0 items-center justify-center rounded-lg border bg-white text-[0.625rem] font-medium dark:bg-white/5',
-                              )}
-                            >
+                            <span className="flex size-6 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[0.625rem] font-medium text-gray-400 group-hover:border-white/20 group-hover:text-white">
                               {team.initial}
                             </span>
                             <span className="truncate">{team.name}</span>
-                          </Link>
+                          </a>
                         </li>
                       );
                     })}
                   </ul>
                 </li>
                 <li className="mt-auto">
-                  <Link
+                  <a
                     href="#"
-                    className="group -mx-2 flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-50 hover:text-indigo-600 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-white"
+                    className="group -mx-2 flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-400 hover:bg-white/5 hover:text-white"
                   >
                     <Cog6ToothIcon
                       aria-hidden="true"
-                      className="size-6 shrink-0 text-gray-400 group-hover:text-indigo-600 dark:group-hover:text-white"
+                      className="size-6 shrink-0"
                     />
                     Settings
-                  </Link>
+                  </a>
                 </li>
               </ul>
             </nav>
@@ -301,19 +267,20 @@ export default function SidebarWithHeader({
 
         {/* main content area */}
         <div className="lg:pl-72">
-          <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-xs sm:gap-x-6 sm:px-6 lg:px-8 dark:border-white/10 dark:bg-gray-900 dark:shadow-none">
+          <div className="bg-background border-foreground/10 sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b px-4 shadow-xs sm:gap-x-6 sm:px-6 lg:px-8">
             <button
               type="button"
               onClick={() => setSidebarOpen(true)}
-              className="-m-2.5 p-2.5 text-gray-700 hover:text-gray-900 lg:hidden dark:text-gray-400 dark:hover:text-white"
+              className="text-foreground/60 hover:text-foreground -m-2.5 p-2.5 lg:hidden"
             >
               <span className="sr-only">Open sidebar</span>
               <Bars3Icon aria-hidden="true" className="size-6" />
             </button>
 
+            {/* separator */}
             <div
               aria-hidden="true"
-              className="h-6 w-px bg-gray-200 lg:hidden dark:bg-white/10"
+              className="bg-foreground/10 h-6 w-px lg:hidden"
             />
 
             <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
@@ -323,25 +290,26 @@ export default function SidebarWithHeader({
                   name="search"
                   placeholder="Search"
                   aria-label="Search"
-                  className="col-start-1 row-start-1 block size-full bg-white pl-8 text-base text-gray-900 outline-hidden placeholder:text-gray-400 sm:text-sm/6 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500"
+                  className="bg-background text-foreground placeholder:text-foreground/40 col-start-1 row-start-1 block size-full pl-8 text-base outline-hidden sm:text-sm/6"
                 />
                 <MagnifyingGlassIcon
                   aria-hidden="true"
-                  className="pointer-events-none col-start-1 row-start-1 size-5 self-center text-gray-400"
+                  className="text-foreground/40 pointer-events-none col-start-1 row-start-1 size-5 self-center"
                 />
               </form>
               <div className="flex items-center gap-x-4 lg:gap-x-6">
                 {/* <button
                   type="button"
-                  className="-m-2.5 p-2.5 text-gray-400 hover:text-gray-500 dark:hover:text-white"
+                  className="-m-2.5 p-2.5 text-gray-400 hover:text-gray-500 dark:text-gray-400 dark:hover:text-gray-300"
                 >
                   <span className="sr-only">View notifications</span>
                   <BellIcon aria-hidden="true" className="size-6" />
-                </button>
+                </button> */}
 
-                <div
+                {/* separator */}
+                {/* <div
                   aria-hidden="true"
-                  className="hidden lg:block lg:h-6 lg:w-px lg:bg-gray-200 dark:lg:bg-white/10"
+                  className="hidden lg:block lg:h-6 lg:w-px lg:bg-gray-900/10 dark:lg:bg-gray-100/10"
                 /> */}
 
                 {/* profile dropdown */}
@@ -352,38 +320,38 @@ export default function SidebarWithHeader({
                     {avatarState.url ? (
                       <img
                         src={avatarState.url}
-                        alt="Avatar"
-                        className="size-8 rounded-full bg-gray-50 outline -outline-offset-1 outline-black/5 dark:bg-gray-800 dark:outline-white/10"
+                        alt="User avatar"
+                        className="bg-background outline-foreground/10 size-8 rounded-full outline -outline-offset-1"
                       />
                     ) : (
                       <UserCircleIcon
                         aria-hidden="true"
-                        className="size-8 text-gray-300 dark:text-gray-500"
+                        className="text-foreground/40 size-8"
                       />
                     )}
                     <span className="hidden lg:flex lg:items-center">
                       <span
                         aria-hidden="true"
-                        className="ml-4 text-sm/6 font-semibold text-gray-900 dark:text-white"
+                        className="text-foreground ml-4 text-sm/6 font-semibold"
                       >
                         {displayName}
                       </span>
                       <ChevronDownIcon
                         aria-hidden="true"
-                        className="ml-2 size-5 text-gray-400 dark:text-gray-500"
+                        className="text-foreground/50 ml-2 size-5"
                       />
                     </span>
                   </MenuButton>
                   <MenuItems
                     transition
-                    className="absolute right-0 z-10 mt-2.5 w-32 origin-top-right rounded-md bg-white py-2 shadow-lg outline-1 outline-gray-900/5 transition data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in dark:bg-gray-800 dark:shadow-none dark:-outline-offset-1 dark:outline-white/10"
+                    className="bg-background outline-foreground/10 absolute right-0 z-10 mt-2.5 w-32 origin-top-right rounded-md py-2 shadow-lg outline transition data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in"
                   >
                     {userNavigation.map((item) => (
                       <MenuItem key={item.name}>
                         {item.href ? (
                           <Link
                             href={item.href}
-                            className="block px-3 py-1 text-sm/6 text-gray-900 data-focus:bg-gray-50 data-focus:outline-hidden dark:text-white dark:data-focus:bg-white/5"
+                            className="text-foreground data-focus:bg-foreground/5 block px-3 py-1 text-sm/6 data-focus:outline-hidden"
                           >
                             {item.name}
                           </Link>
@@ -391,7 +359,7 @@ export default function SidebarWithHeader({
                           <form action={logout}>
                             <button
                               type="submit"
-                              className="block w-full px-3 py-1 text-left text-sm/6 text-gray-900 data-focus:bg-gray-50 dark:text-white dark:data-focus:bg-white/5"
+                              className="text-foreground hover:bg-foreground/5 block w-full cursor-pointer px-3 py-1 text-start text-sm/6 hover:outline-hidden"
                             >
                               {item.name}
                             </button>

@@ -14,7 +14,7 @@ export default function ConfirmEmailPage() {
               stroke="currentColor"
               viewBox="0 0 48 48"
               aria-hidden="true"
-              className="mx-auto size-12 text-gray-400 dark:text-gray-500"
+              className="text-foreground/40 mx-auto size-12"
             >
               <path
                 d="M6 12h36v24H6z"
@@ -29,10 +29,10 @@ export default function ConfirmEmailPage() {
                 strokeLinejoin="round"
               />
             </svg>
-            <h2 className="mt-2 text-base font-semibold text-gray-900 dark:text-white">
+            <h2 className="text-foreground mt-2 text-base font-semibold">
               Didn’t receive the confirmation email?
             </h2>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-foreground/60 mt-1 text-sm">
               Enter the email address you used to sign up and we’ll resend the
               confirmation link.
             </p>
@@ -40,11 +40,11 @@ export default function ConfirmEmailPage() {
 
           <ResendForm />
 
-          <p className="mt-10 text-center text-sm/6 text-gray-500 dark:text-gray-400">
+          <p className="text-foreground/60 mt-10 text-center text-sm/6">
             {'Back to '}
             <Link
               href={APP_ROUTES.AUTH.LOGIN}
-              className="font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+              className="font-semibold text-indigo-600 hover:text-indigo-500"
             >
               sign in
             </Link>

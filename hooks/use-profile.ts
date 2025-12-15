@@ -19,7 +19,6 @@ export function useProfile(userId: string | undefined) {
       if (!userId || !supabaseClient) return null;
 
       const result = await fetchProfileWithClient(supabaseClient, userId);
-
       if (!result.success) {
         throw new Error(result.error);
       }

@@ -12,12 +12,12 @@ export default async function Register() {
       <div className="sm:mx-auto sm:w-full sm:max-w-sm">
         <img
           alt="Your Company"
-          src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=600"
+          src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=500"
           className="mx-auto h-10 w-auto dark:hidden"
         />
         <img
           alt="Your Company"
-          src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=500"
+          src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=600"
           className="mx-auto h-10 w-auto not-dark:hidden"
         />
 
@@ -30,11 +30,11 @@ export default async function Register() {
         {/* form server action */}
         <RegisterForm />
 
-        <p className="mt-10 text-center text-sm/6 text-gray-500 dark:text-gray-400">
+        <p className="text-foreground/60 mt-10 text-center text-sm/6">
           {'Already have an account? '}
           <Link
             href={APP_ROUTES.AUTH.LOGIN}
-            className="font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+            className="font-semibold text-indigo-600 hover:text-indigo-500"
           >
             Sign in
           </Link>

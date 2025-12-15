@@ -9,9 +9,7 @@ export async function fetchProfileWithClient(
   supabase: SupabaseClient,
   userId: string,
 ): Promise<Result<Profile>> {
-  if (!userId) {
-    return failure('Missing user ID');
-  }
+  if (!userId) return failure('Missing user ID');
 
   const { data, error } = await supabase
     .from('profiles')
@@ -24,9 +22,7 @@ export async function fetchProfileWithClient(
     return failure('Failed to fetch user profile');
   }
 
-  if (!data) {
-    return failure('User profile could not be found');
-  }
+  if (!data) return failure('User profile could not be found');
 
   return success({
     full_name: data.full_name ?? '',
@@ -41,9 +37,7 @@ export async function updateProfileWithClient(
   userId: string,
   updates: ProfileUpdate,
 ): Promise<Result<boolean>> {
-  if (!userId) {
-    return failure('Missing user ID');
-  }
+  if (!userId) return failure('Missing user ID');
 
   const { error } = await supabase.from('profiles').upsert({
     id: userId,

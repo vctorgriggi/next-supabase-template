@@ -10,30 +10,22 @@ import { getServerClient } from './server';
 // helpers
 export async function getCurrentUser() {
   const supabase = await getServerClient();
+
   const { data, error } = await supabase.auth.getUser();
-
   if (error || !data?.user) return null;
-
   return data.user;
 }
 
 // guards
 export async function requireAuth() {
   const user = await getCurrentUser();
-
-  if (!user) {
-    redirect(APP_ROUTES.AUTH.LOGIN);
-  }
-
+  if (!user) redirect(APP_ROUTES.AUTH.LOGIN);
   return user;
 }
 
 export async function requireGuest() {
   const user = await getCurrentUser();
-
-  if (user) {
-    redirect(APP_ROUTES.PRIVATE.DASHBOARD);
-  }
+  if (user) redirect(APP_ROUTES.PRIVATE.DASHBOARD);
 }
 
 // auth infra
@@ -47,7 +39,6 @@ export async function signInWithPassword(
     email,
     password,
   });
-
   if (error) {
     if (error.code === 'email_not_confirmed') {
       return failure('AUTH_EMAIL_NOT_CONFIRMED');
@@ -71,7 +62,6 @@ export async function signUp(
     email,
     password,
   });
-
   if (error) {
     console.error('[auth] Sign up failed', { error });
     return failure('AUTH_SIGN_UP_FAILED');
@@ -87,13 +77,9 @@ export async function signOut(): Promise<Result<boolean>> {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
-  if (!user) {
-    return failure('AUTH_NO_USER');
-  }
+  if (!user) return failure('AUTH_NO_USER');
 
   const { error } = await supabase.auth.signOut();
-
   if (error) {
     console.error('[auth] Sign out failed', { error });
     return failure('AUTH_SIGN_OUT_FAILED');
@@ -115,7 +101,6 @@ export async function resendConfirmationEmail(
     type: 'signup',
     email,
   });
-
   if (error) {
     console.error('[auth] resend confirmation failed', error);
     return failure('AUTH_RESEND_CONFIRMATION_FAILED');

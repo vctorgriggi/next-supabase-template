@@ -15,19 +15,17 @@ export async function confirmAvatar(
 ): Promise<Result<string | null>> {
   try {
     const supabase = await getServerClient();
-    const user = await getCurrentUser();
 
-    if (!user) {
-      return failure('User is not authenticated');
-    }
+    const user = await getCurrentUser();
+    if (!user) return failure('User is not authenticated');
 
     const result = await updateProfileDB(user.id, { avatar_url: filePath });
-
     if (!result.success) {
       console.error('[confirmAvatar] Avatar update failed', {
         userId: user.id,
         error: result.error,
       });
+
       return failure('Unable to update avatar');
     }
 

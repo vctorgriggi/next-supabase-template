@@ -4,14 +4,12 @@ import React from 'react';
 
 import { cn } from '@/lib/utils';
 
-export const inputVariants = cva(
-  'block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:placeholder:text-gray-500 dark:focus:outline-indigo-500',
+export const inputVariants = cva('block w-full rounded-md bg-background px-3 py-1.5 text-foreground placeholder:text-foreground/40 outline outline-foreground/20 -outline-offset-1 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600sm:text-sm/6',
   {
     variants: {
       variant: {
-        default: '', // keep base styles
-        error:
-          'text-red-900 outline-red-300 placeholder:text-red-300 focus:outline-red-600 dark:text-red-400 dark:outline-red-500/50 dark:placeholder:text-red-400/70 dark:focus:outline-red-400',
+        default: '',
+        error: 'text-red-600 outline-red-500/40 placeholder:text-red-500/40 focus:outline-red-600',
       },
     },
     defaultVariants: {
@@ -38,7 +36,7 @@ const InputWithLabel = React.forwardRef<HTMLInputElement, InputWithLabelProps>(
       <div>
         <label
           htmlFor={id}
-          className="block text-sm/6 font-medium text-gray-900 dark:text-white"
+          className="text-foreground block text-sm/6 font-medium"
         >
           {label}
         </label>
@@ -56,7 +54,7 @@ const InputWithLabel = React.forwardRef<HTMLInputElement, InputWithLabelProps>(
           {hasError && (
             <ExclamationCircleIcon
               aria-hidden="true"
-              className="pointer-events-none absolute top-1/2 right-3 h-5 w-5 -translate-y-1/2 text-red-500 sm:h-4 sm:w-4 dark:text-red-400"
+              className="pointer-events-none absolute top-1/2 right-3 h-5 w-5 -translate-y-1/2 text-red-500 sm:h-4 sm:w-4"
             />
           )}
         </div>
@@ -65,7 +63,7 @@ const InputWithLabel = React.forwardRef<HTMLInputElement, InputWithLabelProps>(
           <p
             id={`${id}-error`}
             role="alert"
-            className="mt-2 text-sm text-red-600 dark:text-red-400"
+            className="mt-2 text-sm text-red-600"
           >
             {error}
           </p>

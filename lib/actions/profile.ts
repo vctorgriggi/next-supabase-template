@@ -20,22 +20,20 @@ export async function updateProfile(data: unknown): Promise<Result<boolean>> {
       console.warn('[updateProfile] Validation failed', {
         issues: parsed.error.issues,
       });
+
       return failure('Invalid input data');
     }
 
     const user = await getCurrentUser();
-
-    if (!user) {
-      return failure('User is not authenticated');
-    }
+    if (!user) return failure('User is not authenticated');
 
     const result = await updateProfileDB(user.id, parsed.data);
-
     if (!result.success) {
       console.error('[updateProfile] Profile update failed', {
         userId: user.id,
         error: result.error,
       });
+
       return failure('Unable to update profile');
     }
 
