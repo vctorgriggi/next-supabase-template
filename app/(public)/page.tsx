@@ -37,7 +37,7 @@ export default function Home() {
                     Go to dashboard
                   </Link>
                   <a
-                    href="#"
+                    href="https://github.com/vctorgriggi/next-supabase-template"
                     className="text-foreground text-sm/6 font-semibold"
                   >
                     View on GitHub <span aria-hidden="true">→</span>
