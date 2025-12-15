@@ -12,37 +12,11 @@ Validação e submissão type-safe com React Hook Form + Zod.
 
 ---
 
-## 🔄 Fluxo Completo
+## 🔑 Fundamentos
 
-```
-1. Usuário preenche form
-        ↓
-2. React Hook Form valida (client)
-        ↓
-3. Se válido, chama onSubmit()
-        ↓
-4. Server Action executa
-        ↓
-5. Valida de novo (server)
-        ↓
-6. Autentica usuário
-        ↓
-7. Atualiza banco de dados
-        ↓
-8. Retorna Result<T>
-        ↓
-9. Client exibe sucesso/erro
-        ↓
-10. TanStack Query refetch
-        ↓
-11. UI atualiza! ✅
-```
+### Schemas Zod
 
----
-
-## 📝 Exemplo Completo: Account Form
-
-### 1. Schema Zod
+Zod permite criar schemas type-safe com validação automática:
 
 ```typescript
 // lib/validators/account.ts
@@ -75,7 +49,191 @@ export type AccountFormValues = z.infer<typeof accountSchema>;
 
 ---
 
-### 2. Server Action
+### React Hook Form
+
+O `useForm` gerencia o estado do formulário:
+
+```typescript
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+
+const form = useForm<AccountFormValues>({
+  resolver: zodResolver(accountSchema), // ← Conecta com Zod
+  defaultValues: {
+    full_name: '',
+    username: '',
+    website: '',
+  },
+});
+```
+
+**Principais métodos:**
+
+- `register()` - Registra input no form
+- `handleSubmit()` - Valida e chama onSubmit
+- `formState` - Estado atual (errors, isSubmitting, isDirty, isValid)
+- `reset()` - Limpa o form
+
+---
+
+### Estados do Form
+
+React Hook Form expõe vários estados úteis:
+
+#### isSubmitting
+
+Indica se o form está sendo enviado:
+
+```typescript
+<button disabled={form.formState.isSubmitting}>
+  {form.formState.isSubmitting ? 'Salvando...' : 'Salvar'}
+</button>
+```
+
+#### isDirty
+
+Detecta se houve mudanças:
+
+```typescript
+<button disabled={!form.formState.isDirty}>
+  Salvar alterações
+</button>
+```
+
+#### isValid
+
+Verifica se form é válido:
+
+```typescript
+<button disabled={!form.formState.isValid}>
+  Continuar
+</button>
+```
+
+#### errors
+
+Exibe erros de validação:
+
+```typescript
+{form.formState.errors.email && (
+  <span className="text-red-500">
+    {form.formState.errors.email.message}
+  </span>
+)}
+```
+
+---
+
+## 🎨 Componentes Reutilizáveis
+
+### Input com Label e Erro
+
+> **Nota:** Exemplo genérico. Veja `components/ui/input.tsx` para a implementação real do projeto.
+
+```typescript
+// components/ui/input.tsx (exemplo simplificado)
+import { forwardRef } from 'react';
+
+interface Props extends React.InputHTMLAttributes<HTMLInputElement> {
+  label: string;
+  error?: string;
+}
+
+export const Input = forwardRef<HTMLInputElement, Props>(
+  ({ label, error, ...props }, ref) => {
+    return (
+      <div className="space-y-1">
+        <label htmlFor={props.id} className="block text-sm font-medium">
+          {label}
+        </label>
+        <input
+          ref={ref}
+          className={`w-full rounded border px-3 py-2 ${
+            error ? 'border-red-500' : 'border-gray-300'
+          }`}
+          {...props}
+        />
+        {error && (
+          <span className="text-sm text-red-500">{error}</span>
+        )}
+      </div>
+    );
+  }
+);
+
+Input.displayName = 'Input';
+```
+
+**Uso:**
+
+```typescript
+<Input
+  label="Nome completo"
+  {...form.register('full_name')}
+  error={form.formState.errors.full_name?.message}
+/>
+```
+
+---
+
+## 🔑 Padrões de Validação
+
+### 1. Campos opcionais
+
+```typescript
+const schema = z.object({
+  bio: z
+    .string()
+    .max(160)
+    .optional()
+    .transform((val) => val || null), // Empty → null
+});
+```
+
+### 2. Email único
+
+```typescript
+const schema = z.object({
+  email: z
+    .string()
+    .email('Email inválido')
+    .refine(async (email) => {
+      // Verifica se já existe
+      const exists = await checkEmailExists(email);
+      return !exists;
+    }, 'Email já cadastrado'),
+});
+```
+
+### 3. Senha com confirmação
+
+```typescript
+const schema = z
+  .object({
+    password: z.string().min(6, 'Mínimo 6 caracteres'),
+    password_confirm: z.string(),
+  })
+  .refine((data) => data.password === data.password_confirm, {
+    message: 'As senhas não coincidem',
+    path: ['password_confirm'],
+  });
+```
+
+### 4. Data futura
+
+```typescript
+const schema = z.object({
+  birth_date: z.string().refine((date) => new Date(date) < new Date(), {
+    message: 'Data deve estar no passado',
+  }),
+});
+```
+
+---
+
+## 🔄 Server Actions
+
+### Estrutura Básica
 
 ```typescript
 // lib/actions/profile.ts
@@ -121,7 +279,169 @@ export async function updateProfile(data: unknown): Promise<Result<boolean>> {
 
 ---
 
-### 3. Componente Form
+## 🔄 Integração com TanStack Query
+
+### Mutation básica
+
+```typescript
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+
+const queryClient = useQueryClient();
+
+const mutation = useMutation({
+  mutationFn: updateProfile,
+  onSuccess: (result) => {
+    if (result.success) {
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      notifySuccess('Salvo!');
+    } else {
+      notifyError(result.error);
+    }
+  },
+});
+
+function onSubmit(data: AccountFormValues) {
+  mutation.mutate(data);
+}
+```
+
+### Mutation com optimistic update
+
+> **Nota:** Padrão avançado. Implemente apenas se necessário para sua aplicação.
+
+```typescript
+const mutation = useMutation({
+  mutationFn: updateProfile,
+  onMutate: async (newData) => {
+    // Cancela queries em andamento
+    await queryClient.cancelQueries({ queryKey: ['profile'] });
+
+    // Snapshot do valor anterior
+    const previous = queryClient.getQueryData(['profile']);
+
+    // Atualiza otimisticamente
+    queryClient.setQueryData(['profile'], (old) => ({
+      ...old,
+      ...newData,
+    }));
+
+    return { previous };
+  },
+  onError: (err, newData, context) => {
+    // Rollback em caso de erro
+    queryClient.setQueryData(['profile'], context?.previous);
+    notifyError('Erro ao salvar');
+  },
+  onSuccess: (result) => {
+    if (result.success) {
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      notifySuccess('Salvo!');
+    }
+  },
+});
+```
+
+---
+
+## 🎨 Notificações
+
+```typescript
+// lib/ui/notifications.ts
+import { toast } from 'sonner';
+
+export function notifySuccess(message: string) {
+  toast.success(message);
+}
+
+export function notifyError(message: string) {
+  toast.error(message);
+}
+
+export function notifyInfo(message: string) {
+  toast.info(message);
+}
+```
+
+**Uso:**
+
+```typescript
+import { notifySuccess, notifyError } from '@/lib/ui/notifications';
+
+if (result.success) {
+  notifySuccess('Perfil atualizado!');
+} else {
+  notifyError(result.error);
+}
+```
+
+---
+
+## 📝 Exemplo Simples: Login Form
+
+> **Nota:** Código real disponível em `components/auth/login-form/index.tsx`.
+
+```typescript
+// components/auth/login-form/index.tsx (simplificado)
+'use client';
+
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { loginSchema, type LoginFormValues } from '@/lib/validators/auth';
+import { login } from '@/app/(public)/auth/login/actions/auth';
+import { notifyError } from '@/lib/ui/notifications';
+import { Input } from '@/components/ui/input';
+
+export function LoginForm() {
+  const form = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
+
+  async function onSubmit(data: LoginFormValues) {
+    const result = await login(data);
+
+    if (!result.success) {
+      notifyError(result.error);
+    }
+    // Se sucesso, Server Action redireciona automaticamente
+  }
+
+  return (
+    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <Input
+        label="Email"
+        type="email"
+        {...form.register('email')}
+        error={form.formState.errors.email?.message}
+        disabled={form.formState.isSubmitting}
+      />
+
+      <Input
+        label="Senha"
+        type="password"
+        {...form.register('password')}
+        error={form.formState.errors.password?.message}
+        disabled={form.formState.isSubmitting}
+      />
+
+      <button
+        type="submit"
+        disabled={form.formState.isSubmitting}
+        className="w-full rounded bg-blue-600 px-4 py-2 text-white"
+      >
+        {form.formState.isSubmitting ? 'Entrando...' : 'Entrar'}
+      </button>
+    </form>
+  );
+}
+```
+
+---
+
+## 📝 Exemplo Completo: Account Form
 
 > **Nota:** Exemplo simplificado para fins didáticos. O código real em `components/account/account-form.tsx` inclui também a mutation do avatar e componentes UI customizados.
 
@@ -240,240 +560,30 @@ export function AccountForm({ profile }: Props) {
 
 ---
 
-## 🎨 Componentes Reutilizáveis
+## 🔄 Fluxo Completo
 
-> **Nota:** Exemplo genérico. Veja `components/ui/input.tsx` para a implementação real do projeto.
-
-### Input com Label e Erro
-
-```typescript
-// components/ui/input.tsx (exemplo simplificado)
-import { forwardRef } from 'react';
-
-interface Props extends React.InputHTMLAttributes<HTMLInputElement> {
-  label: string;
-  error?: string;
-}
-
-export const Input = forwardRef<HTMLInputElement, Props>(
-  ({ label, error, ...props }, ref) => {
-    return (
-      <div className="space-y-1">
-        <label htmlFor={props.id} className="block text-sm font-medium">
-          {label}
-        </label>
-        <input
-          ref={ref}
-          className={`w-full rounded border px-3 py-2 ${
-            error ? 'border-red-500' : 'border-gray-300'
-          }`}
-          {...props}
-        />
-        {error && (
-          <span className="text-sm text-red-500">{error}</span>
-        )}
-      </div>
-    );
-  }
-);
-
-Input.displayName = 'Input';
 ```
-
-**Uso:**
-
-```typescript
-<Input
-  label="Nome completo"
-  {...form.register('full_name')}
-  error={form.formState.errors.full_name?.message}
-/>
-```
-
----
-
-## 🔑 Padrões Comuns
-
-### 1. Campos opcionais
-
-```typescript
-const schema = z.object({
-  bio: z
-    .string()
-    .max(160)
-    .optional()
-    .transform((val) => val || null), // Empty → null
-});
-```
-
-### 2. Email único
-
-```typescript
-const schema = z.object({
-  email: z
-    .string()
-    .email('Email inválido')
-    .refine(async (email) => {
-      // Verifica se já existe
-      const exists = await checkEmailExists(email);
-      return !exists;
-    }, 'Email já cadastrado'),
-});
-```
-
-### 3. Senha com confirmação
-
-```typescript
-const schema = z
-  .object({
-    password: z.string().min(6, 'Mínimo 6 caracteres'),
-    password_confirm: z.string(),
-  })
-  .refine((data) => data.password === data.password_confirm, {
-    message: 'As senhas não coincidem',
-    path: ['password_confirm'],
-  });
-```
-
-### 4. Data futura
-
-```typescript
-const schema = z.object({
-  birth_date: z.string().refine((date) => new Date(date) < new Date(), {
-    message: 'Data deve estar no passado',
-  }),
-});
-```
-
----
-
-## 🎯 Estados do Form
-
-### isSubmitting
-
-```typescript
-<button disabled={form.formState.isSubmitting}>
-  {form.formState.isSubmitting ? 'Salvando...' : 'Salvar'}
-</button>
-```
-
-### isDirty
-
-Detecta se houve mudanças:
-
-```typescript
-<button disabled={!form.formState.isDirty}>
-  Salvar alterações
-</button>
-```
-
-### isValid
-
-Verifica se form é válido:
-
-```typescript
-<button disabled={!form.formState.isValid}>
-  Continuar
-</button>
-```
-
-### errors
-
-Exibe erros de validação:
-
-```typescript
-{form.formState.errors.email && (
-  <span>{form.formState.errors.email.message}</span>
-)}
-```
-
----
-
-## 🔄 Integração com TanStack Query
-
-### Mutation básica
-
-```typescript
-const mutation = useMutation({
-  mutationFn: updateProfile,
-  onSuccess: (result) => {
-    if (result.success) {
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
-      notifySuccess('Salvo!');
-    } else {
-      notifyError(result.error);
-    }
-  },
-});
-```
-
-### Mutation com optimistic update
-
-> **Nota:** Padrão avançado. Implemente apenas se necessário para sua aplicação.
-
-```typescript
-const mutation = useMutation({
-  mutationFn: updateProfile,
-  onMutate: async (newData) => {
-    // Cancela queries em andamento
-    await queryClient.cancelQueries({ queryKey: ['profile'] });
-
-    // Snapshot do valor anterior
-    const previous = queryClient.getQueryData(['profile']);
-
-    // Atualiza otimisticamente
-    queryClient.setQueryData(['profile'], (old) => ({
-      ...old,
-      ...newData,
-    }));
-
-    return { previous };
-  },
-  onError: (err, newData, context) => {
-    // Rollback em caso de erro
-    queryClient.setQueryData(['profile'], context?.previous);
-    notifyError('Erro ao salvar');
-  },
-  onSuccess: (result) => {
-    if (result.success) {
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
-      notifySuccess('Salvo!');
-    }
-  },
-});
-```
-
----
-
-## 🎨 Notificações
-
-```typescript
-// lib/ui/notifications.ts
-import { toast } from 'sonner';
-
-export function notifySuccess(message: string) {
-  toast.success(message);
-}
-
-export function notifyError(message: string) {
-  toast.error(message);
-}
-
-export function notifyInfo(message: string) {
-  toast.info(message);
-}
-```
-
-**Uso:**
-
-```typescript
-import { notifySuccess, notifyError } from '@/lib/ui/notifications';
-
-if (result.success) {
-  notifySuccess('Perfil atualizado!');
-} else {
-  notifyError(result.error);
-}
+1. Usuário preenche form
+        ↓
+2. React Hook Form valida (client)
+        ↓
+3. Se válido, chama onSubmit()
+        ↓
+4. Server Action executa
+        ↓
+5. Valida de novo (server)
+        ↓
+6. Autentica usuário
+        ↓
+7. Atualiza banco de dados
+        ↓
+8. Retorna Result<T>
+        ↓
+9. Client exibe sucesso/erro
+        ↓
+10. TanStack Query refetch
+        ↓
+11. UI atualiza! ✅
 ```
 
 ---
@@ -529,71 +639,6 @@ const mutation = useMutation({
     form.reset(); // ← Limpa o form
   },
 });
-```
-
----
-
-## 🎯 Exemplo: Login Form
-
-> **Nota:** Código real disponível em `components/auth/login-form/index.tsx`.
-
-```typescript
-// components/auth/login-form/index.tsx (simplificado)
-'use client';
-
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { loginSchema, type LoginFormValues } from '@/lib/validators/auth';
-import { login } from '@/app/(public)/auth/login/actions/auth';
-import { notifyError } from '@/lib/ui/notifications';
-import { Input } from '@/components/ui/input';
-
-export function LoginForm() {
-  const form = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: '',
-      password: '',
-    },
-  });
-
-  async function onSubmit(data: LoginFormValues) {
-    const result = await login(data);
-
-    if (!result.success) {
-      notifyError(result.error);
-    }
-    // Se sucesso, Server Action redireciona automaticamente
-  }
-
-  return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-      <Input
-        label="Email"
-        type="email"
-        {...form.register('email')}
-        error={form.formState.errors.email?.message}
-        disabled={form.formState.isSubmitting}
-      />
-
-      <Input
-        label="Senha"
-        type="password"
-        {...form.register('password')}
-        error={form.formState.errors.password?.message}
-        disabled={form.formState.isSubmitting}
-      />
-
-      <button
-        type="submit"
-        disabled={form.formState.isSubmitting}
-        className="w-full rounded bg-blue-600 px-4 py-2 text-white"
-      >
-        {form.formState.isSubmitting ? 'Entrando...' : 'Entrar'}
-      </button>
-    </form>
-  );
-}
 ```
 
 ---
