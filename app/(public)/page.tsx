@@ -19,7 +19,9 @@ export default function Home() {
                   className="h-11 not-dark:hidden"
                 />
                 <h1 className="mt-10 text-2xl font-semibold tracking-tight text-pretty text-gray-900 sm:text-4xl dark:text-white">
-                  {'A production-ready Next.js + Supabase template that makes real decisions'}
+                  {
+                    'A production-ready Next.js + Supabase template that makes real decisions'
+                  }
                 </h1>
                 <p className="mt-8 text-lg font-medium text-pretty text-gray-500 sm:text-xl/8 dark:text-gray-400">
                   Type-safe by default, opinionated by design, and built for
@@ -35,7 +37,9 @@ export default function Home() {
                     Go to dashboard
                   </a>
                   <a
-                    href="#"
+                    href="https://github.com/vctorgriggi/next-supabase-template"
+                    target="_blank"
+                    rel="noreferrer"
                     className="text-sm/6 font-semibold text-gray-900 dark:text-white"
                   >
                     View on GitHub <span aria-hidden="true">→</span>
