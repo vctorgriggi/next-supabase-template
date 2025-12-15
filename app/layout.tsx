@@ -11,8 +11,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Next.js Supabase Starter',
-  description: 'A starter template for Next.js with Supabase integration.',
+  title: 'Next.js + Supabase Template',
+  description: 'A starter template for building Next.js applications with Supabase authentication and React Query.',
 };
 
 export default function RootLayout({

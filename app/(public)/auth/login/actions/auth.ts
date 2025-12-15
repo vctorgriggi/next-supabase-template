@@ -21,7 +21,11 @@ export async function login(data: unknown) {
   );
 
   if (!result.success) {
-    return failure('Invalid email or password');
+    if (result.error === 'AUTH_EMAIL_NOT_CONFIRMED') {
+      redirect(APP_ROUTES.AUTH.CONFIRM_EMAIL);
+    }
+
+    return failure('INVALID_EMAIL_OR_PASSWORD');
   }
 
   redirect(APP_ROUTES.PRIVATE.DASHBOARD);
@@ -41,7 +45,7 @@ export async function register(data: unknown) {
     return failure('Unable to create account');
   }
 
-  redirect(APP_ROUTES.PRIVATE.DASHBOARD);
+  redirect(APP_ROUTES.AUTH.LOGIN);
 }
 
 export async function logout() {

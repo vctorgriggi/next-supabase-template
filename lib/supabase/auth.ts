@@ -7,6 +7,7 @@ import { failure, success } from '@/lib/types/result';
 
 import { getServerClient } from './server';
 
+// helpers
 export async function getCurrentUser() {
   const supabase = await getServerClient();
   const { data, error } = await supabase.auth.getUser();
@@ -16,6 +17,7 @@ export async function getCurrentUser() {
   return data.user;
 }
 
+// guards
 export async function requireAuth() {
   const user = await getCurrentUser();
 
@@ -47,6 +49,10 @@ export async function signInWithPassword(
   });
 
   if (error) {
+    if (error.code === 'email_not_confirmed') {
+      return failure('AUTH_EMAIL_NOT_CONFIRMED');
+    }
+
     console.error('[auth] Sign in failed', { error });
     return failure('AUTH_SIGN_IN_FAILED');
   }
@@ -94,5 +100,26 @@ export async function signOut(): Promise<Result<boolean>> {
   }
 
   revalidatePath('/', 'layout');
+  return success(true);
+}
+
+/**
+ * Resend confirmation email to the given email address.
+ */
+export async function resendConfirmationEmail(
+  email: string,
+): Promise<Result<boolean>> {
+  const supabase = await getServerClient();
+
+  const { error } = await supabase.auth.resend({
+    type: 'signup',
+    email,
+  });
+
+  if (error) {
+    console.error('[auth] resend confirmation failed', error);
+    return failure('AUTH_RESEND_CONFIRMATION_FAILED');
+  }
+
   return success(true);
 }
