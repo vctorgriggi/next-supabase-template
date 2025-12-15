@@ -4,11 +4,13 @@ A production-ready starter for Next.js apps using Supabase, focused on type safe
 
 This is **not** a minimal starter. It's the setup I kept rebuilding across real projects until I got tired of it.
 
-[![Next.js](https://img.shields.io/badge/Next.js-15-black?style=flat-square&logo=next.js)](https://nextjs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Supabase](https://img.shields.io/badge/Supabase-Latest-3ECF8E?style=flat-square&logo=supabase&logoColor=white)](https://supabase.com/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-38bdf8?style=flat-square&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 [![Zod](https://img.shields.io/badge/Zod-3-3E67B1?style=flat-square&logo=zod&logoColor=white)](https://zod.dev/)
+
+> 📖 **Documentation is available in Portuguese (PT-BR)**
 
 ---
 
@@ -100,12 +102,12 @@ The documentation is structured to be read progressively:
 
 ## 🛠️ Tech Stack
 
-**Framework** → [Next.js 15](https://nextjs.org/) (App Router)  
+**Framework** → [Next.js 16](https://nextjs.org/) (App Router)  
 **Backend** → [Supabase](https://supabase.com/) (Auth, Database, Storage)  
 **Styling** → [Tailwind CSS 4](https://tailwindcss.com/)  
 **Validation** → [Zod](https://zod.dev/)  
-**Data Fetching** → [TanStack Query](https://tanstack.com/query)  
-**Language** → [TypeScript](https://www.typescriptlang.org/)
+**Data Fetching** → [TanStack Query v5](https://tanstack.com/query)  
+**Language** → [TypeScript 5](https://www.typescriptlang.org/)
 
 ---
 
