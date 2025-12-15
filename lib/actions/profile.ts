@@ -17,10 +17,7 @@ export async function updateProfile(data: unknown): Promise<Result<boolean>> {
   try {
     const parsed = accountSchema.safeParse(data);
     if (!parsed.success) {
-      console.warn('[updateProfile] Validation failed', {
-        issues: parsed.error.issues,
-      });
-
+      console.warn('[updateProfile] Validation failed', { issues: parsed.error.issues });
       return failure('Invalid input data');
     }
 
@@ -33,7 +30,6 @@ export async function updateProfile(data: unknown): Promise<Result<boolean>> {
         userId: user.id,
         error: result.error,
       });
-
       return failure('Unable to update profile');
     }
 

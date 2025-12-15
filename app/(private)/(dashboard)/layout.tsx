@@ -2,8 +2,8 @@ import { dehydrate, QueryClient } from '@tanstack/react-query';
 
 import SidebarWithHeader from '@/components/dashboard/sidebar-with-header';
 import QueryProvider from '@/components/providers/query-provider';
+import { prefetchProfile } from '@/hooks/use-profile';
 import { getCurrentUser } from '@/lib/supabase/auth';
-import { prefetchProfile } from '@/lib/supabase/profile.server';
 
 export default async function DashboardLayout({
   children,

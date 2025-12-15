@@ -9,6 +9,10 @@ import { failure, success } from '@/lib/types/result';
 
 import { getCurrentUser } from '../supabase/auth';
 
+/**
+ * Server Action: Confirms and sets the user's avatar after upload
+ * Cleans up previous avatar file if necessary
+ */
 export async function confirmAvatar(
   filePath: string | null,
   previousPath?: string | null,
@@ -25,24 +29,18 @@ export async function confirmAvatar(
         userId: user.id,
         error: result.error,
       });
-
       return failure('Unable to update avatar');
     }
 
-    // cleanup old avatar file (non-blocking)
     if (previousPath && previousPath !== filePath) {
       supabase.storage
         .from('avatars')
         .remove([previousPath])
         .catch((error) => {
-          console.warn('[confirmAvatar] Failed to remove old avatar', {
-            previousPath,
-            error,
-          });
+          console.warn('[confirmAvatar] Failed to remove old avatar', { previousPath, error });
         });
     }
 
-    // revalidate cache
     revalidatePath('/', 'layout');
     return success(filePath);
   } catch (error) {

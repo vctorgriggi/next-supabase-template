@@ -5,6 +5,9 @@ import { failure, success } from '@/lib/types/result';
 
 import type { Profile, ProfileUpdate } from './types';
 
+/**
+ * Fetches a user profile from the database using the provided Supabase client
+ */
 export async function fetchProfileWithClient(
   supabase: SupabaseClient,
   userId: string,
@@ -18,11 +21,11 @@ export async function fetchProfileWithClient(
     .single();
 
   if (error) {
-    console.error('Failed to fetch profile for user', { userId, error });
-    return failure('Failed to fetch user profile');
+    console.error('Could not load user profile', { userId, error });
+    return failure('Failed to load profile');
   }
 
-  if (!data) return failure('User profile could not be found');
+  if (!data) return failure('Profile not found');
 
   return success({
     full_name: data.full_name ?? '',
@@ -32,6 +35,9 @@ export async function fetchProfileWithClient(
   });
 }
 
+/**
+ * Updates a user profile in the database using the provided Supabase client
+ */
 export async function updateProfileWithClient(
   supabase: SupabaseClient,
   userId: string,
@@ -46,8 +52,8 @@ export async function updateProfileWithClient(
   });
 
   if (error) {
-    console.error('Failed to update profile for user', { userId, error });
-    return failure('Failed to update user profile');
+    console.error('Could not update user profile', { userId, updates, error });
+    return failure('Failed to update profile');
   }
 
   return success(true);

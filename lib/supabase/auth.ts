@@ -7,16 +7,21 @@ import { failure, success } from '@/lib/types/result';
 
 import { getServerClient } from './server';
 
-// helpers
+/**
+ * Helpers
+ */
 export async function getCurrentUser() {
   const supabase = await getServerClient();
 
+  // getUser() automatically checks the request cookies for the auth token
   const { data, error } = await supabase.auth.getUser();
   if (error || !data?.user) return null;
   return data.user;
 }
 
-// guards
+/**
+ * Auth guards for Server Actions and Server Components
+ */
 export async function requireAuth() {
   const user = await getCurrentUser();
   if (!user) redirect(APP_ROUTES.AUTH.LOGIN);
@@ -28,7 +33,9 @@ export async function requireGuest() {
   if (user) redirect(APP_ROUTES.PRIVATE.DASHBOARD);
 }
 
-// auth infra
+/**
+ * Auth actions
+ */
 export async function signInWithPassword(
   email: string,
   password: string,
@@ -90,7 +97,7 @@ export async function signOut(): Promise<Result<boolean>> {
 }
 
 /**
- * Resend confirmation email to the given email address.
+ * Resend confirmation email
  */
 export async function resendConfirmationEmail(
   email: string,
