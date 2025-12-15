@@ -1,44 +1,44 @@
-# Next.js + Supabase Template ✨
+# Next.js + Supabase Template 🚀
 
-Production-ready full-stack template with authentication, user profiles, and optimized file uploads.
+A production-ready starter for Next.js apps using Supabase, focused on type safety, security and long-term maintainability.
 
-[![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js)](https://nextjs.org/)
-[![Supabase](https://img.shields.io/badge/Supabase-2.0-3ECF8E?style=flat-square&logo=supabase&logoColor=white)](https://supabase.com/)
+This is **not** a minimal starter. It's the setup I kept rebuilding across real projects until I got tired of it.
+
+[![Next.js](https://img.shields.io/badge/Next.js-15-black?style=flat-square&logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Supabase](https://img.shields.io/badge/Supabase-Latest-3ECF8E?style=flat-square&logo=supabase&logoColor=white)](https://supabase.com/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-38bdf8?style=flat-square&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-
-[Live Demo](https://next-supabase-template-zeta.vercel.app) • [Documentation](./docs)
+[![Zod](https://img.shields.io/badge/Zod-3-3E67B1?style=flat-square&logo=zod&logoColor=white)](https://zod.dev/)
 
 ---
 
 ## ✨ Features
 
-🔐 **Complete Authentication** - Email/password with Supabase Auth  
-👤 **User Profiles** - Avatar uploads with automatic compression (90% size reduction)  
-📁 **Optimized Uploads** - Dual mutation pattern for fast, secure file handling  
-✅ **Type-safe Forms** - React Hook Form + Zod validation on client and server  
-🎨 **Modern UI** - Tailwind CSS 4 + Headless UI components  
-🚀 **SSR Ready** - Server-side rendering with data prefetching  
-📊 **Smart Caching** - TanStack Query with automatic invalidation  
-🔒 **Secure by Default** - Row Level Security policies on all tables
+🔐 **Full Authentication** — Login, register, email confirmation  
+🛡️ **Protected Routes** — App Router layouts with SSR  
+👤 **User Profiles** — Complete profile management system  
+📸 **Avatar Upload** — Client-side compression + Supabase Storage  
+🔒 **RLS Policies** — Database-level security  
+✅ **Type Safety** — TypeScript + Zod end-to-end  
+⚡ **Server Actions** — No API routes needed  
+🔄 **SSR + Prefetch** — TanStack Query integration
 
 ---
 
 ## 📸 Screenshots
 
-### Authentication Flow
+> A quick look at the app structure and main flows.
 
-![Login Page](./docs/images/login.png)
-_Clean and responsive login interface_
+<p align="center">
+  <img src="./docs/images/login-flow.gif" width="600" alt="Application flow demo" />
+</p>
 
-![Login Flow](./docs/images/login-flow.gif)
+<p align="center">
+  <img src="./docs/images/login.png" width="400" alt="Login page" />
+  <img src="./docs/images/account.png" width="400" alt="Account page" />
+</p>
 
-_Complete authentication flow: login → redirect → dashboard_
-
-### Profile Management
-
-![Account Settings](./docs/images/account.png)
-_Profile editing with real-time avatar upload_
+> Screenshots are from the demo app included in this repository.
 
 ---
 
@@ -52,237 +52,100 @@ cd next-supabase-template
 # Install dependencies
 npm install
 
-# Set up environment variables
+# Setup environment
 cp .env.example .env.local
-# Edit .env.local with your Supabase credentials
 
-# Run development server
+# Run the project
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) 🎉
 
-📚 [Complete setup guide](./docs/quick-start.md)
-
 ---
 
-## 🏗️ Project Structure
+## 🏗️ Architectural Decisions
 
-```
-app/
-├── (public)/
-│   └── auth/                  # Login, register pages
-└── (private)/
-    └── (dashboard)/           # Protected routes
-        ├── account/           # Profile settings
-        └── dashboard/         # Main dashboard
+This template makes **strong, explicit choices**:
 
-components/
-├── ui/                        # Base UI components
-├── auth/                      # Authentication forms
-└── account/                   # Profile management
+✅ **Server Actions** instead of API routes  
+✅ **Double validation** (client for UX, server for security)  
+✅ **3-layer database access** (separation of concerns)  
+✅ **`Result<T>` pattern** instead of throwing errors  
+✅ **Direct Storage uploads** (bypass Next.js for files)
 
-lib/
-├── actions/                   # Server Actions
-├── supabase/                  # Supabase clients & helpers
-│   ├── auth.ts               # getCurrentUser(), requireAuth()
-│   ├── profile.ts            # Generic DB functions
-│   └── profile.server.ts     # Server-only wrappers
-├── validators/                # Zod schemas
-└── types/                     # TypeScript types
+These decisions are intentional and documented.
 
-hooks/                         # Custom React hooks
-```
-
-📖 [Complete structure guide](./docs/structure.md)
-
----
-
-## 🛠️ Tech Stack
-
-**Framework** → [Next.js 16](https://nextjs.org/) (App Router)  
-**Backend** → [Supabase](https://supabase.com/) (Auth, Database, Storage)  
-**Styling** → [Tailwind CSS 4](https://tailwindcss.com/)  
-**Forms** → [React Hook Form](https://react-hook-form.com/) + [Zod](https://zod.dev/)  
-**State** → [TanStack Query](https://tanstack.com/query)  
-**UI** → [Headless UI](https://headlessui.com/) + [Heroicons](https://heroicons.com/)  
-**Language** → [TypeScript](https://www.typescriptlang.org/)
+→ Read the full architecture: [`docs/concepts.md`](docs/concepts.md)
 
 ---
 
 ## 📚 Documentation
 
-### Getting Started
+The documentation is structured to be read progressively:
 
-- [Quick Start](./docs/quick-start.md) - Setup in 5 minutes
-- [Supabase Setup](./docs/supabase-setup.md) - Database, RLS, Storage configuration
+**Getting Started**  
+→ [`docs/quick-start.md`](docs/quick-start.md)  
+→ [`docs/supabase-setup.md`](docs/supabase-setup.md)
 
-### Core Concepts
+**Core Concepts & Architecture**  
+→ [`docs/concepts.md`](docs/concepts.md)  
+→ [`docs/structure.md`](docs/structure.md)
 
-- [Architecture](./docs/concepts.md#architecture) - Client/server separation
-- [Result<T> Pattern](./docs/concepts.md#result-pattern) - Type-safe error handling
-- [Server Actions](./docs/concepts.md#server-actions) - Secure mutations
-- [SSR + Prefetch](./docs/concepts.md#ssr-prefetch) - Pre-loaded data
-
-### Features
-
-- [Authentication](./docs/features/authentication.md) - Login, register, protected routes
-- [User Profile](./docs/features/profile.md) - Profile management with avatar uploads
-- [Forms](./docs/features/forms.md) - Validation and submission patterns
-
-### Reference
-
-- [Project Structure](./docs/structure.md) - Folders, layers, naming conventions
+**Features**  
+→ Authentication — [`docs/features/authentication.md`](docs/features/authentication.md)  
+→ User Profile & Avatar — [`docs/features/profile.md`](docs/features/profile.md)  
+→ Forms & Validation — [`docs/features/forms.md`](docs/features/forms.md)
 
 ---
 
-## 🎯 Key Patterns
+## 🛠️ Tech Stack
 
-### Result<T> Pattern
-
-Type-safe error handling without try-catch hell:
-
-```typescript
-import { success, failure } from '@/lib/types/result';
-
-const result = await updateProfile(data);
-
-if (result.success) {
-  console.log(result.data); // ✅ TypeScript knows data exists
-} else {
-  console.error(result.error); // ✅ TypeScript knows error exists
-}
-```
-
-### Server Actions
-
-End-to-end type safety with secure mutations:
-
-```typescript
-'use server';
-
-import { getCurrentUser } from '@/lib/supabase/auth';
-import { updateProfileDB } from '@/lib/supabase/profile.server';
-import { success, failure } from '@/lib/types/result';
-
-export async function updateProfile(data: unknown): Promise<Result<boolean>> {
-  // 1. Validate
-  const parsed = schema.safeParse(data);
-  if (!parsed.success) return failure('Invalid data');
-
-  // 2. Authenticate
-  const user = await getCurrentUser();
-  if (!user) return failure('Not authenticated');
-
-  // 3. Update (delegates to profile.server.ts)
-  const result = await updateProfileDB(user.id, parsed.data);
-  if (!result.success) return failure(result.error);
-
-  // 4. Revalidate cache
-  revalidatePath('/', 'layout');
-  return success(true);
-}
-```
-
-### Dual Mutation (File Uploads)
-
-Fast client-side uploads with secure server-side confirmation:
-
-```typescript
-// 1. Client: Compress and upload directly to Supabase Storage
-const compressed = await compressImage(file);
-await client.storage.from('avatars').upload(filePath, compressed);
-
-// 2. Server: Confirm, update database, cleanup old files
-await confirmAvatar(filePath, previousPath);
-```
-
-Result: **90% smaller files**, no timeouts, automatic cleanup.
-
-[Learn more about patterns](./docs/concepts.md)
+**Framework** → [Next.js 15](https://nextjs.org/) (App Router)  
+**Backend** → [Supabase](https://supabase.com/) (Auth, Database, Storage)  
+**Styling** → [Tailwind CSS 4](https://tailwindcss.com/)  
+**Validation** → [Zod](https://zod.dev/)  
+**Data Fetching** → [TanStack Query](https://tanstack.com/query)  
+**Language** → [TypeScript](https://www.typescriptlang.org/)
 
 ---
 
-## 📜 Scripts
+## ⚠️ When NOT to Use This
 
-```bash
-# Development
-npm run dev
+This template is probably **not** a good fit if:
 
-# Production build
-npm run build
+❌ You want the smallest possible starter  
+❌ You're building a throwaway prototype  
+❌ You're not comfortable with TypeScript  
+❌ You strongly prefer REST API routes
 
-# Run production server
-npm run start
-
-# Linting
-npm run lint
-```
+This project favors **clarity, safety and scalability** over minimalism.
 
 ---
 
-## 🚀 Deployment
+## 🎯 Demo
 
-### Vercel (Recommended)
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/vctorgriggi/next-supabase-template)
-
-1. Click the button above
-2. Add environment variables:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-3. Deploy!
-
-### Other Platforms
-
-This template works with any platform that supports Next.js:
-
-- **Railway** - Auto-deploy from GitHub
-- **Netlify** - Drag & drop or Git integration
-- **Self-hosted** - Docker or Node.js server
-
----
-
-## 🔒 Security
-
-- ✅ **Row Level Security (RLS)** - All tables protected with policies
-- ✅ **Server-side validation** - Zod schemas validate all inputs
-- ✅ **CSRF protection** - Built into Next.js Server Actions
-- ✅ **Secure file uploads** - RLS policies on Storage bucket
-- ✅ **Automatic session refresh** - Handled by middleware
+Live demo: **[https://next-supabase-template-zeta.vercel.app](https://next-supabase-template-zeta.vercel.app/)**
 
 ---
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please read the [contributing guide](./CONTRIBUTING.md) and [structure guide](./docs/structure.md) to understand the architecture before submitting PRs.
+Contributions are welcome! Open an issue or submit a PR.
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+---
+
+## 📜 Project Status
+
+This template is actively used and evolved. Breaking changes may happen as patterns improve.
 
 ---
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT
 
 ---
 
-## 🙏 Acknowledgments
-
-This template builds upon:
-
-- [Next.js](https://nextjs.org/) by Vercel
-- [Supabase](https://supabase.com/) - Open source Firebase alternative
-- Inspired by the [official Supabase + Next.js tutorial](https://supabase.com/docs/guides/getting-started/tutorials/with-nextjs)
-
-Special thanks to the open source community for the amazing tools and libraries.
-
----
-
-**[Report Bug](https://github.com/vctorgriggi/next-supabase-template/issues)** • **[Request Feature](https://github.com/vctorgriggi/next-supabase-template/discussions)**
+**[Issues](https://github.com/vctorgriggi/next-supabase-template/issues)**
 
 Made with ❤️ by [vctorgriggi](https://github.com/vctorgriggi)
