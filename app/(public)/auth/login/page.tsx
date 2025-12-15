@@ -111,7 +111,7 @@ export default async function Login() {
       <div className="relative hidden w-0 flex-1 lg:block">
         <img
           alt=""
-          src="https://images.unsplash.com/photo-1682616599052-627315455403?q=80"
+          src="https://images.unsplash.com/photo-1557682268-e3955ed5d83f?q=80"
           className="absolute inset-0 size-full object-cover"
         />
       </div>
