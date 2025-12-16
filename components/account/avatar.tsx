@@ -7,6 +7,7 @@ import Button from '@/components/ui/button';
 import { useProfileAvatar } from '@/hooks/use-profile-avatar';
 import { compressImage } from '@/lib/images/compress';
 import { getBrowserClient } from '@/lib/supabase/client';
+import { getErrorMessage } from '@/lib/utils';
 
 type AvatarProps = {
   uid: string | null;
@@ -56,7 +57,7 @@ export default function Avatar({
     }
   }, [avatarState.error, onError]);
 
-  async function handleFile(file: File) {
+  async function handleFileUpload(file: File) {
     if (!uid) throw new Error('User ID is required');
     if (!file.type.startsWith('image/'))
       throw new Error('Only image files are allowed');
@@ -86,7 +87,6 @@ export default function Avatar({
       });
 
     if (uploadError) {
-      // cleanup preview on error
       if (previewUrl) {
         try {
           URL.revokeObjectURL(previewUrl);
@@ -98,7 +98,6 @@ export default function Avatar({
       throw uploadError;
     }
 
-    // cleanup preview after successful upload
     if (previewUrl) {
       try {
         URL.revokeObjectURL(previewUrl);
@@ -113,8 +112,8 @@ export default function Avatar({
       supabaseClient.storage
         .from('avatars')
         .remove([url])
-        .catch((err: unknown) => {
-          console.warn('Failed to remove old avatar:', err);
+        .catch((error: unknown) => {
+          console.warn('Could not remove old avatar:', getErrorMessage(error));
         });
     }
 
@@ -130,18 +129,17 @@ export default function Avatar({
         return;
       }
 
-      const filePath = await handleFile(file);
+      const filePath = await handleFileUpload(file);
       onUpload(filePath);
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error(String(err));
-      onError?.(error);
+    } catch (error) {
+      onError?.(new Error(getErrorMessage(error)));
     } finally {
       setUploading(false);
       if (e.target) e.target.value = '';
     }
   }
 
-  async function removeAvatar() {
+  async function onRemoveClick() {
     if (!url) {
       onUpload(null);
       return;
@@ -161,36 +159,48 @@ export default function Avatar({
       if (error) throw error;
 
       onUpload(null);
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error(String(err));
-      onError?.(error);
+    } catch (error) {
+      onError?.(new Error(getErrorMessage(error)));
     } finally {
       setUploading(false);
     }
   }
 
+  /**
+   * Renders the avatar based on the current state.
+   */
+  function renderAvatar() {
+    if (avatarState.isLoading) {
+      return (
+        <div
+          className="bg-foreground/10 animate-pulse rounded-full"
+          style={{ width: size, height: size }}
+        />
+      );
+    }
+
+    if (avatarState.url) {
+      return (
+        <img
+          src={avatarState.url}
+          alt="User avatar"
+          className="rounded-full object-cover"
+          style={{ width: size, height: size }}
+        />
+      );
+    }
+
+    return (
+      <UserCircleIcon
+        aria-hidden="true"
+        className="text-foreground/40 size-12"
+      />
+    );
+  }
+
   return (
     <div className="mt-2 flex items-center gap-x-3">
-      <div style={{ width: size, height: size }}>
-        {avatarState.isLoading ? (
-          <div
-            className="bg-foreground/10 animate-pulse rounded-full"
-            style={{ width: size, height: size }}
-          />
-        ) : avatarState.url ? (
-          <img
-            src={avatarState.url}
-            alt="User avatar"
-            className="rounded-full object-cover"
-            style={{ width: size, height: size }}
-          />
-        ) : (
-          <UserCircleIcon
-            aria-hidden="true"
-            className="text-foreground/40 size-12"
-          />
-        )}
-      </div>
+      <div style={{ width: size, height: size }}>{renderAvatar()}</div>
 
       <div className="flex items-center gap-x-2">
         <label
@@ -211,7 +221,7 @@ export default function Avatar({
         <Button
           type="button"
           variant="error"
-          onClick={removeAvatar}
+          onClick={onRemoveClick}
           disabled={uploading || !url}
         >
           Remove

@@ -11,7 +11,9 @@ import InputWithLabel from '@/components/ui/input';
 import { useProfile } from '@/hooks/use-profile';
 import { confirmAvatar } from '@/lib/actions/avatar';
 import { updateProfile } from '@/lib/actions/profile';
+import { profileKeys } from '@/lib/query-keys/profile';
 import { notifyError, notifySuccess } from '@/lib/ui/notifications';
+import { getErrorMessage } from '@/lib/utils';
 import { accountSchema, AccountValues } from '@/lib/validators/account';
 
 import Avatar from './avatar';
@@ -19,8 +21,6 @@ import Avatar from './avatar';
 export default function AccountForm({ user }: { user: User | null }) {
   const queryClient = useQueryClient();
   const [loading, setLoading] = React.useState(false);
-
-  // ✅ Usa o hook que pega do cache do prefetch!
   const { profile, isLoading: isLoadingProfile } = useProfile(user?.id);
 
   const confirmMutation = useMutation({
@@ -32,9 +32,7 @@ export default function AccountForm({ user }: { user: User | null }) {
         payload.filePath,
         payload.previousPath,
       );
-      if (!result.success) {
-        throw new Error(result.error);
-      }
+      if (!result.success) throw new Error(result.error);
       return result.data;
     },
   });
@@ -47,9 +45,7 @@ export default function AccountForm({ user }: { user: User | null }) {
         website: values.website,
         avatar_url: values.avatar_url,
       });
-      if (!result.success) {
-        throw new Error(result.error);
-      }
+      if (!result.success) throw new Error(result.error);
       return result.data;
     },
   });
@@ -79,7 +75,6 @@ export default function AccountForm({ user }: { user: User | null }) {
     avatar_url: null,
   });
 
-  // ✅ Atualiza o form quando o profile carregar
   React.useEffect(() => {
     if (profile) {
       const values: AccountValues = {
@@ -101,7 +96,6 @@ export default function AccountForm({ user }: { user: User | null }) {
 
     try {
       setLoading(true);
-
       await confirmMutation.mutateAsync({ filePath, previousPath });
 
       const newValues = {
@@ -112,32 +106,29 @@ export default function AccountForm({ user }: { user: User | null }) {
       reset(newValues);
       initialValuesRef.current = newValues;
 
-      if (user?.id) {
-        queryClient.invalidateQueries({ queryKey: ['profile', user.id] });
+      if (user.id) {
+        queryClient.invalidateQueries({
+          queryKey: profileKeys.detail(user.id),
+        });
       }
-
       notifySuccess(
         filePath === null
           ? 'Your profile picture was removed.'
           : 'Your profile picture was updated.',
       );
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error(String(err));
+    } catch (error) {
       reset({
         ...current,
         avatar_url: current.avatar_url,
       } satisfies AccountValues);
-      notifyError(error.message);
+      notifyError(getErrorMessage(error));
     } finally {
       setLoading(false);
     }
   }
 
   async function onSubmit(values: AccountValues) {
-    if (!user) {
-      notifyError('Not authenticated. Please log in.');
-      return;
-    }
+    if (!user) return;
 
     try {
       setLoading(true);
@@ -146,25 +137,25 @@ export default function AccountForm({ user }: { user: User | null }) {
         ...values,
         website: values.website || null,
       };
-
       await updateMutation.mutateAsync(updates);
 
       reset(values);
       initialValuesRef.current = values;
 
-      if (user?.id) {
-        queryClient.invalidateQueries({ queryKey: ['profile', user.id] });
+      if (user.id) {
+        queryClient.invalidateQueries({
+          queryKey: profileKeys.detail(user.id),
+        });
       }
-
       notifySuccess('Profile updated successfully');
     } catch (error) {
-      notifyError((error as Error)?.message || 'Something went wrong.');
+      notifyError(getErrorMessage(error));
     } finally {
       setLoading(false);
     }
   }
 
-  function handleCancel() {
+  function onCancel() {
     reset(initialValuesRef.current);
   }
 
@@ -272,7 +263,7 @@ export default function AccountForm({ user }: { user: User | null }) {
         <button
           type="button"
           className="text-foreground hover:text-foreground/70 text-sm/6 font-semibold"
-          onClick={handleCancel}
+          onClick={onCancel}
           disabled={loading}
         >
           Cancel
