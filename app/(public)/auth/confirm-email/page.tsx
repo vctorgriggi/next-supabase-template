@@ -1,6 +1,6 @@
 import Link from 'next/link';
 
-import ResendForm from '@/components/auth/confirm-email/resend-form';
+import ResendForm from '@/components/auth/resend-form';
 import { APP_ROUTES } from '@/constants/app-routes';
 
 export default function ConfirmEmailPage() {
