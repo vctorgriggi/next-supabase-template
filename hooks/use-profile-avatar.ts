@@ -1,5 +1,7 @@
+'use client';
+
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { useEffect, useState } from 'react';
+import React from 'react';
 
 interface AvatarState {
   url: string | null;
@@ -19,13 +21,13 @@ export function useProfileAvatar(
   avatarUrl: string | null | undefined,
   supabaseClient: SupabaseClient | null,
 ) {
-  const [state, setState] = useState<AvatarState>({
+  const [state, setState] = React.useState<AvatarState>({
     url: null,
     error: null,
     isLoading: true,
   });
 
-  useEffect(() => {
+  React.useEffect(() => {
     let mounted = true;
 
     async function resolveAvatar() {
