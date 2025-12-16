@@ -168,13 +168,10 @@ export default function AccountForm({ user }: { user: User | null }) {
     reset(initialValuesRef.current);
   }
 
-  // ✅ Loading state enquanto carrega o profile
   if (isLoadingProfile) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="text-sm text-gray-600 dark:text-gray-400">
-          Loading profile...
-        </div>
+        <p className="text-foreground/60 text-sm">Wait a moment...</p>
       </div>
     );
   }
@@ -182,12 +179,12 @@ export default function AccountForm({ user }: { user: User | null }) {
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <div className="space-y-12">
-        <div className="grid grid-cols-1 gap-x-8 gap-y-10 border-b border-gray-900/10 pb-12 md:grid-cols-3 dark:border-white/10">
+        <div className="border-foreground/10 grid grid-cols-1 gap-x-8 gap-y-10 border-b pb-12 md:grid-cols-3">
           <div>
-            <h2 className="text-base/7 font-semibold text-gray-900 dark:text-white">
+            <h2 className="text-foreground text-base/7 font-semibold">
               Profile
             </h2>
-            <p className="mt-1 text-sm/6 text-gray-600 dark:text-gray-400">
+            <p className="text-foreground/60 mt-1 text-sm/6">
               This information will be displayed publicly so be careful what you
               share.
             </p>
@@ -212,7 +209,7 @@ export default function AccountForm({ user }: { user: User | null }) {
                 error={errors.website?.message ?? null}
                 {...register('website')}
               />
-              <p className="mt-3 text-sm/6 text-gray-600 dark:text-gray-400">
+              <p className="text-foreground/60 mt-3 text-sm/6">
                 Your personal website or blog.
               </p>
             </div>
@@ -220,7 +217,7 @@ export default function AccountForm({ user }: { user: User | null }) {
             <div className="col-span-full">
               <label
                 htmlFor="photo"
-                className="block text-sm/6 font-medium text-gray-900 dark:text-white"
+                className="text-foreground block text-sm/6 font-medium"
               >
                 Photo
               </label>
@@ -237,12 +234,12 @@ export default function AccountForm({ user }: { user: User | null }) {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-x-8 gap-y-10 border-b border-gray-900/10 pb-12 md:grid-cols-3 dark:border-white/10">
+        <div className="border-foreground/10 grid grid-cols-1 gap-x-8 gap-y-10 border-b pb-12 md:grid-cols-3">
           <div>
-            <h2 className="text-base/7 font-semibold text-gray-900 dark:text-white">
+            <h2 className="text-foreground text-base/7 font-semibold">
               Personal Information
             </h2>
-            <p className="mt-1 text-sm/6 text-gray-600 dark:text-gray-400">
+            <p className="text-foreground/60 mt-1 text-sm/6">
               Use a permanent address where you can receive mail.
             </p>
           </div>
@@ -274,7 +271,7 @@ export default function AccountForm({ user }: { user: User | null }) {
       <div className="mt-6 flex items-center justify-end gap-x-6">
         <button
           type="button"
-          className="text-sm/6 font-semibold text-gray-900 dark:text-white"
+          className="text-foreground hover:text-foreground/70 text-sm/6 font-semibold"
           onClick={handleCancel}
           disabled={loading}
         >

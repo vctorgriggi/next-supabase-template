@@ -174,7 +174,7 @@ export default function Avatar({
       <div style={{ width: size, height: size }}>
         {avatarState.isLoading ? (
           <div
-            className="animate-pulse rounded-full bg-gray-200 dark:bg-gray-700"
+            className="bg-foreground/10 animate-pulse rounded-full"
             style={{ width: size, height: size }}
           />
         ) : avatarState.url ? (
@@ -187,7 +187,7 @@ export default function Avatar({
         ) : (
           <UserCircleIcon
             aria-hidden="true"
-            className="size-12 text-gray-300 dark:text-gray-500"
+            className="text-foreground/40 size-12"
           />
         )}
       </div>
@@ -195,7 +195,7 @@ export default function Avatar({
       <div className="flex items-center gap-x-2">
         <label
           htmlFor="avatar-upload"
-          className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:shadow-none dark:inset-ring-white/5 dark:hover:bg-white/20"
+          className="bg-background text-foreground inset-ring-foreground/10 hover:bg-foreground/5 rounded-md px-3 py-2 text-sm font-semibold inset-ring"
         >
           Change
           <input
