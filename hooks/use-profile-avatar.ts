@@ -1,7 +1,8 @@
 'use client';
 
-import type { SupabaseClient } from '@supabase/supabase-js';
 import React from 'react';
+
+import { getBrowserClient } from '@/lib/supabase/client';
 
 interface AvatarState {
   url: string | null;
@@ -11,16 +12,9 @@ interface AvatarState {
 
 /**
  * Hook to resolve a user's profile avatar URL.
- * Handles different formats of avatarUrl:
- * - If avatarUrl is a full URL (starts with http(s):// or blob:), use it directly.
- * - If avatarUrl is a storage path, use the Supabase client to get the public URL.
- * - If avatarUrl is null/undefined, return null URL.
- * - If Supabase client is not provided when needed, return an error.
+ * Handles external URLs, blob URLs, and Supabase Storage paths.
  */
-export function useProfileAvatar(
-  avatarUrl: string | null | undefined,
-  supabaseClient: SupabaseClient | null,
-) {
+export function useProfileAvatar(avatarUrl: string | null | undefined) {
   const [state, setState] = React.useState<AvatarState>({
     url: null,
     error: null,
@@ -33,34 +27,21 @@ export function useProfileAvatar(
     async function resolveAvatar() {
       setState({ url: null, error: null, isLoading: true });
 
-      // no avatar URL provided
       if (!avatarUrl) {
         if (mounted) setState({ url: null, error: null, isLoading: false });
         return;
       }
 
-      // avatarUrl is a full URL
       if (/^(https?:\/\/|blob:)/i.test(avatarUrl)) {
-        if (mounted)
-          setState({ url: avatarUrl, error: null, isLoading: false });
-        return;
-      }
-
-      // avatarUrl is a storage path but no Supabase client provided
-      if (!supabaseClient) {
         if (mounted) {
-          setState({
-            url: null,
-            error: 'client not initialized',
-            isLoading: false,
-          });
+          setState({ url: avatarUrl, error: null, isLoading: false });
         }
         return;
       }
 
-      // avatarUrl is a storage path, resolve using Supabase client
       try {
-        const { data } = supabaseClient.storage
+        const supabase = getBrowserClient();
+        const { data } = supabase.storage
           .from('avatars')
           .getPublicUrl(avatarUrl);
 
@@ -84,7 +65,7 @@ export function useProfileAvatar(
     return () => {
       mounted = false;
     };
-  }, [avatarUrl, supabaseClient]);
+  }, [avatarUrl]);
 
   return state;
 }

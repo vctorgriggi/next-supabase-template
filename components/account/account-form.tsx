@@ -11,7 +11,7 @@ import InputWithLabel from '@/components/ui/input';
 import { useProfile } from '@/hooks/use-profile';
 import { confirmAvatar } from '@/lib/actions/avatar';
 import { updateProfile } from '@/lib/actions/profile';
-import { profileKeys } from '@/lib/query-keys/profile';
+import { profileKeys } from '@/lib/query/keys/profile';
 import { notifyError, notifySuccess } from '@/lib/ui/notifications';
 import { getErrorMessage } from '@/lib/utils';
 import { accountSchema, AccountValues } from '@/lib/validators/account';

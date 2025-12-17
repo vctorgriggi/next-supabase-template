@@ -1,12 +1,12 @@
 import { QueryClient } from '@tanstack/react-query';
 
-import { profileKeys } from '@/lib/query-keys/profile';
+import { profileKeys } from '@/lib/query/keys/profile';
 import { fetchProfile } from '@/lib/supabase/profile.server';
 
 /**
- * Prefetches a user profile for React Query cache
+ * Hydrates the profile query for the given user ID
  */
-export async function prefetchProfile(
+export async function hydrateProfileQuery(
   queryClient: QueryClient,
   userId: string,
 ): Promise<void> {
@@ -17,6 +17,6 @@ export async function prefetchProfile(
       if (!result.success) throw new Error(result.error);
       return result.data;
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 5, // when hydrating, set staleTime to 5 minutes
   });
 }

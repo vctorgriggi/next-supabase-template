@@ -58,8 +58,8 @@ export default function SidebarWithHeader({
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
   const pathname = usePathname();
 
-  const { profile, supabaseClient } = useProfile(user?.id);
-  const avatarState = useProfileAvatar(profile?.avatar_url, supabaseClient);
+  const { profile } = useProfile(user?.id);
+  const avatarState = useProfileAvatar(profile?.avatar_url);
 
   const displayName = profile?.full_name || user?.email || 'User';
 

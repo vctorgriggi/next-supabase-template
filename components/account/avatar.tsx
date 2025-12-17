@@ -37,7 +37,7 @@ export default function Avatar({
     }
   }, []);
 
-  const avatarState = useProfileAvatar(previewUrl || url, supabaseClient);
+  const avatarState = useProfileAvatar(previewUrl || url);
 
   React.useEffect(() => {
     return () => {
