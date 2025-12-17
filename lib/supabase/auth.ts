@@ -51,8 +51,8 @@ export async function signInWithPassword(
       return failure('AUTH_EMAIL_NOT_CONFIRMED');
     }
 
-    console.error('[auth] Sign in failed', { error });
-    return failure('AUTH_SIGN_IN_FAILED');
+    // console.error('[auth] Sign in failed', { error });
+    return failure(error.message);
   }
 
   revalidatePath('/', 'layout');
@@ -70,8 +70,8 @@ export async function signUp(
     password,
   });
   if (error) {
-    console.error('[auth] Sign up failed', { error });
-    return failure('AUTH_SIGN_UP_FAILED');
+    // console.error('[auth] Sign up failed', { error });
+    return failure(error.message);
   }
 
   revalidatePath('/', 'layout');
@@ -88,7 +88,8 @@ export async function signOut(): Promise<Result<boolean>> {
 
   const { error } = await supabase.auth.signOut();
   if (error) {
-    console.error('[auth] Sign out failed', { error });
+    // console.error('[auth] Sign out failed', { error });
+    // Use a generic error message to avoid leaking info
     return failure('AUTH_SIGN_OUT_FAILED');
   }
 

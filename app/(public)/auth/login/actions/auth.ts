@@ -25,7 +25,7 @@ export async function login(data: unknown) {
       redirect(APP_ROUTES.AUTH.CONFIRM_EMAIL);
     }
 
-    return failure('INVALID_EMAIL_OR_PASSWORD');
+    return failure(result.error);
   }
 
   redirect(APP_ROUTES.PRIVATE.DASHBOARD);
@@ -42,7 +42,7 @@ export async function register(data: unknown) {
   const result = await signUp(parsed.data.email, parsed.data.password);
 
   if (!result.success) {
-    return failure('Unable to create account');
+    return failure(result.error);
   }
 
   redirect(APP_ROUTES.AUTH.LOGIN);
@@ -52,7 +52,7 @@ export async function logout() {
   const result = await signOut();
 
   if (!result.success) {
-    console.error('[logout] Error:', { error: result.error });
+    console.error('[logout] Sign out failed:', result.error);
   }
 
   redirect(APP_ROUTES.AUTH.LOGIN);
