@@ -1,4 +1,4 @@
-import AccountForm from '@/components/account/account-form';
+import AccountForm from '@/components/features/account/account-form';
 import { getCurrentUser } from '@/lib/supabase/auth';
 
 export default async function Account() {

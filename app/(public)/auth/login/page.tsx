@@ -1,6 +1,6 @@
 import Link from 'next/link';
 
-import LoginForm from '@/components/auth/login-form';
+import LoginForm from '@/components/features/auth/login-form';
 import { APP_ROUTES } from '@/constants/app-routes';
 import { requireGuest } from '@/lib/supabase/auth';
 

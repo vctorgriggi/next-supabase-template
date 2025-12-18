@@ -1,6 +1,6 @@
 import Link from 'next/link';
 
-import RegisterForm from '@/components/auth/register-form';
+import RegisterForm from '@/components/features/auth/register-form';
 import { APP_ROUTES } from '@/constants/app-routes';
 import { requireGuest } from '@/lib/supabase/auth';
 
