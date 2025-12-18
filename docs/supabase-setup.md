@@ -1,209 +1,200 @@
 # Configuração do Supabase
 
-Configure o banco de dados, autenticação e storage do Supabase.
+Este guia descreve **como configurar o Supabase para funcionar corretamente com este template**.
+Os exemplos SQL e comentários técnicos estão em inglês, enquanto as explicações permanecem em português.
 
 ---
 
 ## 📋 Pré-requisitos
 
-- Conta no Supabase (gratuita)
-- Projeto criado no [Supabase Dashboard](https://supabase.com/dashboard)
+- Conta no Supabase
+- Projeto criado no Supabase Dashboard
 
 ---
 
-## 🗄️ Tabelas
+## 🗄️ Database Schema
 
-### 1. Profiles
+### Profiles table
 
-A tabela `profiles` armazena dados dos usuários.
+A tabela `profiles` armazena dados públicos do usuário e é a **fonte de verdade** para o perfil.
 
 ```sql
--- Criar tabela profiles
-create table profiles (
+-- Create profiles table
+create table public.profiles (
   id uuid references auth.users on delete cascade not null primary key,
-  name text,
-  bio text,
+  full_name text,
+  username text unique,
   website text,
   avatar_url text,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- Habilitar RLS
-alter table profiles enable row level security;
+-- Enable Row Level Security
+alter table public.profiles enable row level security;
 ```
+
+**Observações:**
+
+- `id` referencia diretamente `auth.users.id`
+- `username` é único e validado no banco
+- `avatar_url` armazena apenas o path no Storage
 
 ---
 
-## 🔒 RLS Policies (Row Level Security)
+## 🔒 Row Level Security (RLS)
 
-### Profiles
+### Profiles policies
 
 ```sql
--- SELECT: Usuários podem ver qualquer perfil
-create policy "Profiles são públicos para leitura"
-  on profiles for select
+-- Allow public read access
+create policy "Profiles are publicly readable"
+  on public.profiles
+  for select
   using (true);
 
--- INSERT: Usuários podem criar apenas o próprio perfil
-create policy "Usuários podem criar próprio perfil"
-  on profiles for insert
-  with check ((select auth.uid()) = id);
+-- Allow users to insert their own profile
+create policy "Users can insert their own profile"
+  on public.profiles
+  for insert
+  with check (auth.uid() = id);
 
--- UPDATE: Usuários podem atualizar apenas o próprio perfil
-create policy "Usuários podem atualizar próprio perfil"
-  on profiles for update
-  using ((select auth.uid()) = id);
+-- Allow users to update their own profile
+create policy "Users can update their own profile"
+  on public.profiles
+  for update
+  using (auth.uid() = id);
 ```
+
+Essas políticas garantem que:
+
+- qualquer pessoa pode **ver** perfis
+- apenas o dono pode **criar ou editar** o próprio perfil
 
 ---
 
 ## 🔄 Triggers
 
-### Auto-criar perfil ao registrar
+### Auto-create profile on signup
 
-Quando um usuário se registra, criamos automaticamente um perfil:
+Quando um usuário se registra, um perfil é criado automaticamente.
 
 ```sql
--- Função que cria o perfil
+-- Create function to handle new users
 create function public.handle_new_user()
 returns trigger
 language plpgsql
-security definer set search_path = ''
+security definer
+set search_path = ''
 as $$
 begin
-  insert into public.profiles (id, name, avatar_url)
+  insert into public.profiles (id, full_name)
   values (
     new.id,
-    new.raw_user_meta_data->>'full_name',
-    new.raw_user_meta_data->>'avatar_url'
+    new.raw_user_meta_data->>'full_name'
   );
   return new;
 end;
 $$;
 
--- Trigger que executa após criar usuário
+-- Trigger executed after user creation
 create trigger on_auth_user_created
-  after insert on auth.users
-  for each row execute procedure public.handle_new_user();
+after insert on auth.users
+for each row
+execute procedure public.handle_new_user();
 ```
 
-**Como funciona:**
-
-1. Usuário se registra com `signUp({ email, password, options: { data: { full_name: 'João' } } })`
-2. Supabase cria usuário na tabela `auth.users`
-3. Trigger `on_auth_user_created` dispara
-4. Função `handle_new_user()` cria perfil em `profiles`
-5. Dados de `raw_user_meta_data` vão pro perfil
+> ℹ️ Nota sobre `avatar_url`
+>
+> A documentação oficial do Supabase inclui o campo `avatar_url` no trigger de criação do perfil,
+> utilizando dados de `raw_user_meta_data`.
+>
+> Neste template, o avatar faz parte de um **fluxo explícito de edição de perfil**, com preview,
+> compressão no client e confirmação manual no momento do save.
+>
+> Por esse motivo, o campo `avatar_url` **não é inicializado no signup**.
+> Isso evita estados intermediários inconsistentes e mantém o controle do fluxo no nível da aplicação.
 
 ---
 
 ## 📁 Storage
 
-### 1. Criar Bucket
+### Avatar bucket
 
-No Supabase Dashboard:
+Crie manualmente um bucket chamado `avatars` no Supabase Dashboard.
 
-1. Vá em **Storage**
-2. Clique em **New bucket**
-3. Nome: `avatars`
-4. **Public bucket:** ✅ Marque como público
-5. Clique em **Create bucket**
+- Bucket name: `avatars`
+- Public bucket: ✅ habilitado
 
-### 2. RLS Policies do Storage
+### Storage policies
 
 ```sql
--- INSERT: Usuários podem fazer upload apenas na própria pasta
-create policy "Usuários podem fazer upload de avatar"
-  on storage.objects for insert
-  with check (
-    bucket_id = 'avatars'
-    and (select auth.uid())::text = (storage.foldername(name))[1]
-  );
+-- Allow users to upload files only to their own folder
+create policy "Users can upload their own avatars"
+on storage.objects
+for insert
+with check (
+  bucket_id = 'avatars'
+  and auth.uid()::text = (storage.foldername(name))[1]
+);
 
--- UPDATE: Usuários podem atualizar apenas próprios arquivos
-create policy "Usuários podem atualizar próprio avatar"
-  on storage.objects for update
-  using (
-    bucket_id = 'avatars'
-    and (select auth.uid())::text = (storage.foldername(name))[1]
-  );
+-- Allow users to update their own files
+create policy "Users can update their own avatars"
+on storage.objects
+for update
+using (
+  bucket_id = 'avatars'
+  and auth.uid()::text = (storage.foldername(name))[1]
+);
 
--- DELETE: Usuários podem deletar apenas próprios arquivos
-create policy "Usuários podem deletar próprio avatar"
-  on storage.objects for delete
-  using (
-    bucket_id = 'avatars'
-    and (select auth.uid())::text = (storage.foldername(name))[1]
-  );
+-- Allow users to delete their own files
+create policy "Users can delete their own avatars"
+on storage.objects
+for delete
+using (
+  bucket_id = 'avatars'
+  and auth.uid()::text = (storage.foldername(name))[1]
+);
 
--- SELECT: Avatares são públicos (qualquer um pode ver)
-create policy "Avatares são públicos"
-  on storage.objects for select
-  using (bucket_id = 'avatars');
+-- Allow public read access to avatars
+create policy "Avatars are publicly readable"
+on storage.objects
+for select
+using (bucket_id = 'avatars');
 ```
 
-**Como funciona:**
+**Formato esperado do path:**
 
 ```
-Path do arquivo: avatars/abc-123-def/foto.jpg
-                          └───────┘
-                              │
-                  Deve ser igual a auth.uid()
+avatars/<user-id>/<filename>
 ```
 
-**Proteção:**
-
-- ✅ User `abc-123` só faz upload em `avatars/abc-123/`
-- ❌ User `abc-123` NÃO pode fazer upload em `avatars/xyz-456/`
-- ✅ Todo mundo pode VER avatares (público)
-- ❌ Só owner pode DELETAR
+Uploads são feitos diretamente no Storage, mas **só se tornam definitivos após salvar o perfil**.
 
 ---
 
-## ⚙️ Configuração de Autenticação
-
-### 1. Habilitar Email Auth
+## ⚙️ Authentication Settings
 
 No Supabase Dashboard:
 
-1. Vá em **Authentication** → **Providers**
-2. Habilite **Email**
-3. Configure:
-   - **Enable email confirmations:** Opcional (recomendado em produção)
-   - **Secure email change:** ✅ Habilitado
-   - **Secure password change:** ✅ Habilitado
+### Providers
 
-### 2. Configurar Site URL
+- Authentication → Providers
+- Enable **Email**
+- Email confirmation: opcional (recomendado em produção)
 
-Em **Authentication** → **URL Configuration**:
+### URL Configuration
 
-- **Site URL:** `http://localhost:3000` (desenvolvimento)
-- **Redirect URLs:**
+- Site URL: `http://localhost:3000`
+- Redirect URLs:
   - `http://localhost:3000/**`
-  - `https://seu-dominio.com/**` (produção)
-
-### 3. Email Templates (Opcional)
-
-Personalize os emails em **Authentication** → **Email Templates**:
-
-- Confirmation email
-- Magic link
-- Change email
-- Reset password
+  - `https://seu-dominio.com/**`
 
 ---
 
-## 🔑 Variáveis de Ambiente
+## 🔑 Environment Variables
 
-Copie suas credenciais do Supabase:
-
-1. Vá em **Settings** → **API**
-2. Copie:
-   - **Project URL** → `NEXT_PUBLIC_SUPABASE_URL`
-   - **anon/public key** → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-
-Adicione no `.env.local`:
+Copie as credenciais em **Settings → API**:
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://seu-projeto.supabase.co
@@ -212,182 +203,26 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=sua-chave-anon-aqui
 
 ---
 
-## ✅ Verificando a Configuração
+## ✅ Verificação
 
-### Teste 1: Tabelas criadas
+1. **Profiles table**
+   - Table Editor → `profiles`
 
-1. Vá em **Table Editor**
-2. Verifique se existe: `profiles`
+2. **RLS**
+   - Cadeado 🔒 visível na tabela
 
-### Teste 2: RLS ativo
+3. **Storage**
+   - Bucket `avatars` criado e público
 
-1. Clique na tabela `profiles`
-2. Veja se aparece 🔒 ao lado do nome
-3. Se sim, RLS está ativo! ✅
+4. **Trigger**
+   - Criar usuário → perfil criado automaticamente
 
-### Teste 3: Storage configurado
-
-1. Vá em **Storage**
-2. Verifique se bucket `avatars` existe
-3. Clique nele e veja se aparece "Public" ✅
-
-### Teste 4: Auth funcionando
-
-1. Rode `npm run dev`
-2. Vá em `/auth/register`
-3. Crie uma conta
-4. Verifique em **Authentication** → **Users** se o usuário foi criado
-5. Verifique em **Table Editor** → **profiles** se o perfil foi criado automaticamente
-
-Se tudo deu certo: **✅ Supabase configurado!**
+Se tudo isso estiver ok, o Supabase está pronto para uso.
 
 ---
 
-## 🐛 Problemas Comuns
+## 📚 Próximos passos
 
-### "relation 'profiles' does not exist"
-
-**Causa:** Tabela não foi criada
-
-**Solução:**
-
-1. Vá em **SQL Editor** no Supabase Dashboard
-2. Execute o SQL de criação da tabela `profiles`
-
-### Upload de imagem falha
-
-**Causa:** Bucket não existe ou RLS policies não configuradas
-
-**Solução:**
-
-1. Verifique se bucket `avatars` existe
-2. Verifique se é público
-3. Execute as RLS policies do Storage
-
-### Perfil não é criado ao registrar
-
-**Causa:** Trigger não foi criado
-
-**Solução:**
-
-1. Execute o SQL da função `handle_new_user()`
-2. Execute o SQL do trigger `on_auth_user_created`
-3. Teste criando um novo usuário
-
-### "Invalid API key"
-
-**Causa:** Variáveis de ambiente erradas
-
-**Solução:**
-
-1. Verifique se `.env.local` existe
-2. Confirme que as chaves estão corretas
-3. Reinicie o servidor (`npm run dev`)
-
----
-
-## 📚 SQL Completo (Copy/Paste)
-
-Copie e cole tudo de uma vez no **SQL Editor**:
-
-```sql
--- ============================================
--- TABELAS
--- ============================================
-
-create table profiles (
-  id uuid references auth.users on delete cascade not null primary key,
-  name text,
-  bio text,
-  website text,
-  avatar_url text,
-  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
-  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
-);
-
-alter table profiles enable row level security;
-
--- ============================================
--- RLS POLICIES - PROFILES
--- ============================================
-
-create policy "Profiles são públicos para leitura"
-  on profiles for select
-  using (true);
-
-create policy "Usuários podem criar próprio perfil"
-  on profiles for insert
-  with check ((select auth.uid()) = id);
-
-create policy "Usuários podem atualizar próprio perfil"
-  on profiles for update
-  using ((select auth.uid()) = id);
-
--- ============================================
--- TRIGGERS
--- ============================================
-
-create function public.handle_new_user()
-returns trigger
-language plpgsql
-security definer set search_path = ''
-as $$
-begin
-  insert into public.profiles (id, name, avatar_url)
-  values (
-    new.id,
-    new.raw_user_meta_data->>'full_name',
-    new.raw_user_meta_data->>'avatar_url'
-  );
-  return new;
-end;
-$$;
-
-create trigger on_auth_user_created
-  after insert on auth.users
-  for each row execute procedure public.handle_new_user();
-
--- ============================================
--- RLS POLICIES - STORAGE
--- ============================================
-
-create policy "Usuários podem fazer upload de avatar"
-  on storage.objects for insert
-  with check (
-    bucket_id = 'avatars'
-    and (select auth.uid())::text = (storage.foldername(name))[1]
-  );
-
-create policy "Usuários podem atualizar próprio avatar"
-  on storage.objects for update
-  using (
-    bucket_id = 'avatars'
-    and (select auth.uid())::text = (storage.foldername(name))[1]
-  );
-
-create policy "Usuários podem deletar próprio avatar"
-  on storage.objects for delete
-  using (
-    bucket_id = 'avatars'
-    and (select auth.uid())::text = (storage.foldername(name))[1]
-  );
-
-create policy "Avatares são públicos"
-  on storage.objects for select
-  using (bucket_id = 'avatars');
-```
-
-**Não esqueça:**
-
-1. Criar bucket `avatars` manualmente no Storage
-2. Marcar como público ✅
-
----
-
-## 🎯 Próximos Passos
-
-Supabase configurado! Agora:
-
-- [Autenticação](./features/authentication.md) - Como o sistema de auth funciona
-- [Perfil](./features/profile.md) - Sistema de perfil e avatar
+- [Autenticação](./features/authentication.md)
+- [Perfil de usuário](./features/profile.md)
 - [← Voltar ao índice](./README.md)

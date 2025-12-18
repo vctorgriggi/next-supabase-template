@@ -19,7 +19,7 @@ This is **not** a minimal starter. It's the setup I kept rebuilding across real 
 🔐 **Full Authentication** — Login, register, email confirmation  
 🛡️ **Protected Routes** — App Router layouts with SSR  
 👤 **User Profiles** — Complete profile management system  
-📸 **Avatar Upload** — Client-side compression + Supabase Storage  
+📸 **Avatar Upload** — Client-side upload, committed via Server Actions
 🔒 **RLS Policies** — Database-level security  
 ✅ **Type Safety** — TypeScript + Zod end-to-end  
 ⚡ **Server Actions** — No API routes needed  
@@ -73,7 +73,7 @@ This template makes **strong, explicit choices**:
 ✅ **Double validation** (client for UX, server for security)  
 ✅ **3-layer database access** (separation of concerns)  
 ✅ **`Result<T>` pattern** instead of throwing errors  
-✅ **Direct Storage uploads** (bypass Next.js for files)
+✅ **Direct Storage uploads** (client-side, draft-first, committed via Server Actions)
 
 These decisions are intentional and documented.
 

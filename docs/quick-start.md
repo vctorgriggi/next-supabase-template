@@ -1,6 +1,12 @@
 # Guia Rápido
 
-Configure o template em 5 minutos e comece a desenvolver.
+Este guia mostra como **rodar o template localmente** e verificar se tudo está funcionando.
+Ele cobre o caminho feliz de setup, sem entrar em detalhes arquiteturais.
+
+Se você quiser entender _como_ e _por que_ o template funciona dessa forma,
+consulte a documentação de conceitos após a instalação.
+
+> ⏱️ Tempo estimado: ~5 a 10 minutos, assumindo familiaridade com Next.js e Supabase.
 
 ---
 
@@ -83,7 +89,11 @@ Abra [http://localhost:3000](http://localhost:3000) 🎉
 1. Clique em "Login"
 2. Se não tiver conta, clique em "Register"
 3. Crie uma conta com email/senha
-4. Verifique se foi redirecionado para `/dashboard`
+4. Se a confirmação de email estiver habilitada no Supabase:
+   - Verifique sua caixa de email
+   - Clique no link de confirmação
+5. Faça login
+6. Você deve ser redirecionado para `/dashboard`
 
 ### Teste 3: Upload de avatar funciona
 
@@ -91,7 +101,7 @@ Abra [http://localhost:3000](http://localhost:3000) 🎉
 2. Clique em "Change" no avatar
 3. Escolha uma imagem
 4. Veja o preview aparecer instantaneamente
-5. Avatar deve atualizar automaticamente
+5. Clique em "Save" para confirmar a alteração do avatar
 
 Se tudo funcionou: **✅ Instalação completa!**
 
@@ -99,25 +109,26 @@ Se tudo funcionou: **✅ Instalação completa!**
 
 ## 🗂️ Estrutura de Pastas (Visão Rápida)
 
-```
+> Visão simplificada da estrutura do projeto. A organização completa está documentada em `docs/structure.md`.
+
+```bash
 next-supabase-template/
-├── app/                    # Rotas do Next.js
-│   ├── (public)/          # Páginas públicas (login, home)
-│   └── (private)/         # Páginas protegidas (dashboard, account)
+├── app/                  # Rotas do Next.js (App Router)
+│   ├── (public)/         # Páginas públicas (login, home)
+│   └── (private)/        # Páginas protegidas (dashboard, account)
 │
-├── components/            # Componentes React
-│   ├── ui/               # Componentes base (button, input)
-│   ├── auth/             # Forms de login/registro
-│   └── account/          # Perfil e avatar
+├── components/           # Componentes React
+│   ├── ui/               # Componentes base reutilizáveis
+│   └── features/         # Componentes por domínio (auth, profile, etc.)
 │
-├── lib/                  # Lógica principal
-│   ├── actions/          # Server Actions
-│   ├── supabase/         # Clients e helpers
+├── lib/                  # Lógica do domínio e infraestrutura
+│   ├── supabase/         # Clientes e acesso ao banco
 │   ├── validators/       # Schemas Zod
-│   └── types/            # Tipos TypeScript
+│   └── types/            # Tipos compartilhados
 │
 ├── hooks/                # Custom React hooks
-└── docs/                 # Documentação (você está aqui!)
+└── docs/                 # Documentação
+
 ```
 
 📖 [Estrutura completa explicada](./structure.md)

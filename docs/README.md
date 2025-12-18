@@ -1,6 +1,16 @@
 # Documentação
 
-Guia completo para entender e usar o Next.js + Supabase Template.
+Guia prático para entender a arquitetura, os fluxos e as decisões do **Next.js + Supabase Template**.
+
+Esta documentação foi pensada para quem quer ir além do “funciona” e entender
+**como e por que** as coisas estão organizadas da forma atual.
+
+> ℹ️ **Nota sobre o estado da documentação**
+>
+> Parte da documentação está em processo de revisão para refletir mudanças recentes
+> na arquitetura e nos fluxos do template.
+> Os conceitos centrais e os guias principais estão corretos, mas alguns detalhes
+> ainda estão sendo simplificados e alinhados gradualmente.
 
 ---
 
