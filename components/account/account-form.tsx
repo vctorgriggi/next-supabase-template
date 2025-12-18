@@ -2,72 +2,35 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { User } from '@supabase/supabase-js';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import React from 'react';
 import { useForm } from 'react-hook-form';
 
+import { updateProfile } from '@/app/(private)/(dashboard)/account/actions/profile';
 import Button from '@/components/ui/button';
 import InputWithLabel from '@/components/ui/input';
 import { useProfile } from '@/hooks/use-profile';
-import { confirmAvatar } from '@/lib/actions/avatar';
-import { updateProfile } from '@/lib/actions/profile';
-import { profileKeys } from '@/lib/query/keys/profile';
 import { notifyError, notifySuccess } from '@/lib/ui/notifications';
 import { getErrorMessage } from '@/lib/utils';
-import { accountSchema, AccountValues } from '@/lib/validators/account';
+import { accountSchema, type AccountValues } from '@/lib/validators/account';
 
 import Avatar from './avatar';
 
 export default function AccountForm({ user }: { user: User | null }) {
-  const queryClient = useQueryClient();
-  const [loading, setLoading] = React.useState(false);
   const { profile, isLoading: isLoadingProfile } = useProfile(user?.id);
-
-  const confirmMutation = useMutation({
-    mutationFn: async (payload: {
-      filePath: string | null;
-      previousPath?: string | null;
-    }) => {
-      const result = await confirmAvatar(
-        payload.filePath,
-        payload.previousPath,
-      );
-      if (!result.success) throw new Error(result.error);
-      return result.data;
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: async (values: AccountValues) => {
-      const result = await updateProfile({
-        full_name: values.full_name,
-        username: values.username,
-        website: values.website,
-        avatar_url: values.avatar_url,
-      });
-      if (!result.success) throw new Error(result.error);
-      return result.data;
-    },
-  });
 
   const {
     register,
     watch,
-    getValues,
+    setValue,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
     reset,
   } = useForm<AccountValues>({
     resolver: zodResolver(accountSchema),
-    defaultValues: {
-      full_name: '',
-      username: '',
-      website: null,
-      avatar_url: null,
-    },
   });
 
   const avatarUrl = watch('avatar_url');
+
   const initialValuesRef = React.useRef<AccountValues>({
     full_name: '',
     username: '',
@@ -75,6 +38,8 @@ export default function AccountForm({ user }: { user: User | null }) {
     avatar_url: null,
   });
 
+  // syncs server profile data into the form.
+  // also stores the initial values to allow "Cancel" to revert changes.
   React.useEffect(() => {
     if (profile) {
       const values: AccountValues = {
@@ -88,70 +53,25 @@ export default function AccountForm({ user }: { user: User | null }) {
     }
   }, [profile, reset]);
 
-  async function handleAvatarUpload(filePath: string | null) {
-    if (!user) return;
-
-    const current = getValues();
-    const previousPath = initialValuesRef.current?.avatar_url ?? null;
-
-    try {
-      setLoading(true);
-      await confirmMutation.mutateAsync({ filePath, previousPath });
-
-      const newValues = {
-        ...current,
-        avatar_url: filePath,
-      } satisfies AccountValues;
-
-      reset(newValues);
-      initialValuesRef.current = newValues;
-
-      if (user.id) {
-        queryClient.invalidateQueries({
-          queryKey: profileKeys.detail(user.id),
-        });
-      }
-      notifySuccess(
-        filePath === null
-          ? 'Your profile picture was removed.'
-          : 'Your profile picture was updated.',
-      );
-    } catch (error) {
-      reset({
-        ...current,
-        avatar_url: current.avatar_url,
-      } satisfies AccountValues);
-      notifyError(getErrorMessage(error));
-    } finally {
-      setLoading(false);
-    }
-  }
-
   async function onSubmit(values: AccountValues) {
     if (!user) return;
 
     try {
-      setLoading(true);
-
-      const updates = {
+      const result = await updateProfile({
         ...values,
         website: values.website || null,
-      };
-      await updateMutation.mutateAsync(updates);
+      });
+
+      if (!result.success) {
+        throw new Error(result.error);
+      }
 
       reset(values);
       initialValuesRef.current = values;
 
-      if (user.id) {
-        queryClient.invalidateQueries({
-          queryKey: profileKeys.detail(user.id),
-        });
-      }
       notifySuccess('Profile updated successfully');
     } catch (error) {
       notifyError(getErrorMessage(error));
-    } finally {
-      setLoading(false);
     }
   }
 
@@ -206,19 +126,21 @@ export default function AccountForm({ user }: { user: User | null }) {
             </div>
 
             <div className="col-span-full">
-              <label
-                htmlFor="photo"
-                className="text-foreground block text-sm/6 font-medium"
-              >
+              <label className="text-foreground block text-sm/6 font-medium">
                 Photo
               </label>
 
+              {/* 
+                avatar upload only updates the form state.
+                the file is uploaded immediately, but it is not committed
+                until the user saves the form.
+              */}
               <Avatar
                 uid={user?.id ?? null}
                 url={avatarUrl}
-                size={48}
-                compress
-                onUpload={handleAvatarUpload}
+                onChange={(filePath) => {
+                  setValue('avatar_url', filePath);
+                }}
                 onError={(err) => notifyError(err.message)}
               />
             </div>
@@ -264,11 +186,11 @@ export default function AccountForm({ user }: { user: User | null }) {
           type="button"
           className="text-foreground hover:text-foreground/70 text-sm/6 font-semibold"
           onClick={onCancel}
-          disabled={loading}
+          disabled={isSubmitting}
         >
           Cancel
         </button>
-        <Button type="submit" variant="primary" disabled={loading}>
+        <Button type="submit" variant="primary" disabled={isSubmitting}>
           Save
         </Button>
       </div>

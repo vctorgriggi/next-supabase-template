@@ -13,7 +13,6 @@ import { getServerClient } from './server';
 export async function getCurrentUser() {
   const supabase = await getServerClient();
 
-  // getUser() automatically checks the request cookies for the auth token
   const { data, error } = await supabase.auth.getUser();
   if (error || !data?.user) return null;
   return data.user;
@@ -52,7 +51,8 @@ export async function signInWithPassword(
     }
 
     // console.error('[auth] Sign in failed', { error });
-    return failure(error.message);
+    // use a generic error message to avoid leaking info
+    return failure('Could not sign in');
   }
 
   revalidatePath('/', 'layout');
@@ -71,7 +71,8 @@ export async function signUp(
   });
   if (error) {
     // console.error('[auth] Sign up failed', { error });
-    return failure(error.message);
+    // use a generic error message to avoid leaking info
+    return failure('Could not sign up');
   }
 
   revalidatePath('/', 'layout');
@@ -80,19 +81,7 @@ export async function signUp(
 
 export async function signOut(): Promise<Result<boolean>> {
   const supabase = await getServerClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return failure('AUTH_NO_USER');
-
-  const { error } = await supabase.auth.signOut();
-  if (error) {
-    // console.error('[auth] Sign out failed', { error });
-    // Use a generic error message to avoid leaking info
-    return failure('AUTH_SIGN_OUT_FAILED');
-  }
-
+  await supabase.auth.signOut();
   revalidatePath('/', 'layout');
   return success(true);
 }
@@ -110,8 +99,9 @@ export async function resendConfirmationEmail(
     email,
   });
   if (error) {
-    console.error('[auth] resend confirmation failed', error);
-    return failure('AUTH_RESEND_CONFIRMATION_FAILED');
+    // console.error('[auth] resend confirmation failed', error);
+    // use a generic error message to avoid leaking info
+    return failure('Could not resend confirmation email');
   }
 
   return success(true);
